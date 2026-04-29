@@ -69,7 +69,7 @@ export function PostCard({
   const [flowOpen, setFlowOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -77,9 +77,16 @@ export function PostCard({
   const openMenu = () => {
     if (menuBtnRef.current) {
       const rect = menuBtnRef.current.getBoundingClientRect();
+      const MENU_WIDTH = 220;
+      const VIEWPORT_PADDING = 8;
+      const preferredLeft = rect.right - MENU_WIDTH;
+      const clampedLeft = Math.max(
+        VIEWPORT_PADDING,
+        Math.min(preferredLeft, window.innerWidth - MENU_WIDTH - VIEWPORT_PADDING)
+      );
       setMenuPos({
-        top: rect.bottom + 6,                   // viewport Y — no scrollY needed for position:fixed
-        right: window.innerWidth - rect.right,  // distance from right edge of viewport
+        top: rect.bottom + 6,
+        left: clampedLeft,
       });
     }
     setMenuOpen(true);
@@ -388,7 +395,7 @@ export function PostCard({
                     style={{
                       position: "fixed",
                       top: menuPos.top,
-                      right: menuPos.right,
+                      left: menuPos.left,
                       zIndex: 9999,
                       pointerEvents: "auto",
                     }}

@@ -216,7 +216,7 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`absolute top-full mt-2 z-50 w-80 sm:w-96 bg-[var(--bg-soft)] backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-[var(--border-hover)] overflow-hidden ${isAr ? "left-0 sm:left-auto right-0" : "right-0"}`}
+              className={`fixed top-[74px] left-2 right-2 z-50 w-auto bg-[var(--bg-soft)] backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-[var(--border-hover)] overflow-hidden sm:absolute sm:top-full sm:left-auto sm:right-0 sm:mt-2 sm:w-96 ${isAr ? "sm:right-0" : "sm:right-0"}`}
             >
               <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-black/5 dark:bg-white/5">
                 <h3 className="font-bold text-sm text-[var(--text)]">{isAr ? "التنبيهات" : "Notifications"}</h3>
