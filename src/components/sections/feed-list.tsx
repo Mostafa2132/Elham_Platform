@@ -47,14 +47,20 @@ export function FeedList() {
   const isFetchingRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const withTimeout = useCallback(async <T,>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) =>
+  const timeoutPromise = useCallback(
+    (timeoutMs: number): Promise<never> =>
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
       ),
-    ]);
-  }, []);
+    []
+  );
+
+  const withTimeout = useCallback(
+    <T,>(promise: PromiseLike<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
+      return Promise.race([Promise.resolve(promise), timeoutPromise(timeoutMs)]);
+    },
+    [timeoutPromise]
+  );
 
   // تحميل الإعلانات المخصصة للخلاصة عند بدء التشغيل
   useEffect(() => {

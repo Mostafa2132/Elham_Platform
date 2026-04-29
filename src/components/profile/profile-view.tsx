@@ -45,11 +45,11 @@ export function ProfileView({ profileId }: ProfileViewProps) {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const REQUEST_TIMEOUT_MS = 12000;
 
-  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Request timeout")), timeoutMs)),
-    ]);
+  const timeoutPromise = (timeoutMs: number): Promise<never> =>
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Request timeout")), timeoutMs));
+
+  const withTimeout = <T,>(promise: PromiseLike<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
+    return Promise.race([Promise.resolve(promise), timeoutPromise(timeoutMs)]);
   };
 
   const targetId = profileId ?? user?.id;
