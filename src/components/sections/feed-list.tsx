@@ -67,84 +67,87 @@ export function FeedList() {
       if (targetPage === 0) setLoading(true);
       else setLoadingMore(true);
 
-      const from = targetPage * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+      try {
+        const from = targetPage * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
-        .from("posts")
-        .select(
-          "id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro)"
-        )
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        const { data, error } = await supabase
+          .from("posts")
+          .select(
+            "id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro)"
+          )
+          .order("created_at", { ascending: false })
+          .range(from, to);
 
-      if (error) {
-        toast.error(error.message);
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        const hydrated: Post[] = (data ?? []).map((item) => {
+          const record = item as Record<string, unknown>;
+          return {
+            ...record,
+            profiles: Array.isArray(record.profiles)
+              ? record.profiles[0] ?? null
+              : record.profiles,
+          } as Post;
+        });
+
+        if (hydrated.length) {
+          const postIds = hydrated.map((p) => p.id);
+          const { data: likeCounts } = await supabase
+            .from("likes")
+            .select("post_id")
+            .in("post_id", postIds);
+
+          const counts =
+            (likeCounts as { post_id: string }[] | null)?.reduce((acc: Record<string, number>, item) => {
+              acc[item.post_id] = (acc[item.post_id] ?? 0) + 1;
+              return acc;
+            }, {} as Record<string, number>) ?? {};
+
+          let likedIds = new Set<string>();
+          let savedIds = new Set<string>();
+          
+          if (user) {
+            const [
+              { data: myLikes },
+              { data: mySaves }
+            ] = await Promise.all([
+              supabase.from("likes").select("post_id").eq("user_id", user.id).in("post_id", postIds),
+              supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds)
+            ]);
+            
+            likedIds = new Set((myLikes as { post_id: string }[] | null ?? []).map((l) => l.post_id));
+            savedIds = new Set((mySaves as { post_id: string }[] | null ?? []).map((s) => s.post_id));
+          }
+
+          hydrated.forEach((p) => {
+            p.liked_by_me = likedIds.has(p.id);
+            p.saved_by_me = savedIds.has(p.id);
+            p.likes_count = counts[p.id] ?? 0;
+          });
+
+          // مزامنة البيانات مع المخزن العام (Global Store)
+          useInteractionStore.getState().addLikedPosts(Array.from(likedIds));
+          useInteractionStore.getState().addSavedPosts(Array.from(savedIds));
+        }
+
+        setPosts((prev) =>
+          targetPage === 0 ? hydrated : [...prev, ...hydrated]
+        );
+        setHasMore(hydrated.length === PAGE_SIZE);
+      } catch (err) {
+        console.error("Feed fetch failed:", err);
+        toast.error(locale === "ar" ? "تعذر تحميل البيانات. حاول مرة أخرى." : "Failed to load data. Please try again.");
+      } finally {
         setLoading(false);
         setLoadingMore(false);
         isFetchingRef.current = false;
-        return;
       }
-
-      const hydrated: Post[] = (data ?? []).map((item) => {
-        const record = item as Record<string, unknown>;
-        return {
-          ...record,
-          profiles: Array.isArray(record.profiles)
-            ? record.profiles[0] ?? null
-            : record.profiles,
-        } as Post;
-      });
-
-      if (hydrated.length) {
-        const postIds = hydrated.map((p) => p.id);
-        const { data: likeCounts } = await supabase
-          .from("likes")
-          .select("post_id")
-          .in("post_id", postIds);
-
-        const counts =
-          (likeCounts as { post_id: string }[] | null)?.reduce((acc: Record<string, number>, item) => {
-            acc[item.post_id] = (acc[item.post_id] ?? 0) + 1;
-            return acc;
-          }, {} as Record<string, number>) ?? {};
-
-        let likedIds = new Set<string>();
-        let savedIds = new Set<string>();
-        
-        if (user) {
-          const [
-            { data: myLikes },
-            { data: mySaves }
-          ] = await Promise.all([
-            supabase.from("likes").select("post_id").eq("user_id", user.id).in("post_id", postIds),
-            supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds)
-          ]);
-          
-          likedIds = new Set((myLikes as { post_id: string }[] | null ?? []).map((l) => l.post_id));
-          savedIds = new Set((mySaves as { post_id: string }[] | null ?? []).map((s) => s.post_id));
-        }
-
-        hydrated.forEach((p) => {
-          p.liked_by_me = likedIds.has(p.id);
-          p.saved_by_me = savedIds.has(p.id);
-          p.likes_count = counts[p.id] ?? 0;
-        });
-
-        // مزامنة البيانات مع المخزن العام (Global Store)
-        useInteractionStore.getState().addLikedPosts(Array.from(likedIds));
-        useInteractionStore.getState().addSavedPosts(Array.from(savedIds));
-      }
-
-      setPosts((prev) =>
-        targetPage === 0 ? hydrated : [...prev, ...hydrated]
-      );
-      setHasMore(hydrated.length === PAGE_SIZE);
-      setLoading(false);
-      setLoadingMore(false);
-      isFetchingRef.current = false;
     },
-    [supabase, user]
+    [supabase, user, locale]
   );
 
   useEffect(() => {

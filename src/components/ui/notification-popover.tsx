@@ -32,6 +32,7 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isAr = locale === "ar";
 
@@ -62,8 +63,27 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
       .limit(20);
 
     if (error) console.error("Error fetching notifications:", error);
-    else setNotifications(data || []);
+    else {
+      const rows = data || [];
+      setNotifications(rows);
+      setUnreadCount(rows.filter(n => !n.is_read).length);
+    }
     setLoading(false);
+  };
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    const { count, error } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .not("is_read", "is", true);
+
+    if (error) {
+      console.error("Error fetching unread notifications count:", error);
+      return;
+    }
+    setUnreadCount(count ?? 0);
   };
 
   useEffect(() => {
@@ -71,7 +91,14 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
   }, [open]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
+
+    fetchUnreadCount();
 
     const channel = supabase
       .channel(`notifications-realtime`)
@@ -81,7 +108,8 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
         (payload) => {
           const newNotif = payload.new as Notification;
           if (newNotif.user_id === user.id) {
-            fetchNotifications();
+            setUnreadCount((prev) => prev + 1);
+            if (open) fetchNotifications();
           }
         }
       )
@@ -90,9 +118,10 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, open]);
 
   const markAsRead = async (id: string) => {
+    const target = notifications.find(n => n.id === id);
     const { error } = await supabase
       .from("notifications")
       .update({ is_read: true })
@@ -100,6 +129,9 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
 
     if (!error) {
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      if (target && !target.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
     }
   };
 
@@ -109,14 +141,16 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
       .from("notifications")
       .update({ is_read: true })
       .eq("user_id", user.id)
-      .eq("is_read", false);
+      .not("is_read", "is", true);
 
     if (!error) {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
     }
   };
 
   const deleteNotification = async (id: string) => {
+    const target = notifications.find(n => n.id === id);
     const { error } = await supabase
       .from("notifications")
       .delete()
@@ -124,6 +158,9 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
 
     if (!error) {
       setNotifications(prev => prev.filter(n => n.id !== id));
+      if (target && !target.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
     }
   };
 
@@ -152,8 +189,6 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
       default: return <FiBell className="text-amber-500" />;
     }
   };
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <div className="relative">
