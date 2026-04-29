@@ -240,6 +240,16 @@ export function Navbar({ locale }: { locale: Locale }) {
           </MobileNavLink>
           {user ? (
             <>
+              <MobileNavLink href={`/${locale}/chat`} onClick={() => setMenuOpen(false)}>
+                <span className="flex items-center gap-2">
+                  {t.nav.messages}
+                  {unreadChatCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+                      {unreadChatCount}
+                    </span>
+                  )}
+                </span>
+              </MobileNavLink>
               <MobileNavLink href={`/${locale}/profile`} onClick={() => setMenuOpen(false)}>
                 {t.nav.profile}
               </MobileNavLink>
