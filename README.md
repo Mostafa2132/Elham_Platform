@@ -1,136 +1,139 @@
-# Elham (?????)
+# Elham Platform
 
-Modern bilingual inspirational platform using **Next.js App Router + Tailwind + Supabase (frontend-only)**.
+منصة اجتماعية ثنائية اللغة (العربية/الإنجليزية) لمشاركة المحتوى الملهم، مبنية بـ `Next.js` و`Supabase`، مع تكامل `Google Analytics` و`Google AdSense` ودعم مدفوعات `Stripe`.
 
-## Stack
-- Next.js + TypeScript
-- Tailwind CSS
-- Supabase JS (Auth + Database + Storage upload)
-- Framer Motion
-- Zustand
-- Formik + Yup
-- React Toastify
+## نظرة سريعة
+- **نوع المشروع:** Social/Inspirational Platform.
+- **الوظائف الأساسية:** Auth, Profiles, Posts, Likes, Admin, Ads.
+- **الخدمات الخارجية:** Supabase, Google Analytics, Google AdSense, Stripe.
 
-## Folder structure
+## المميزات
+- تسجيل ودخول عبر Supabase Auth.
+- إنشاء محتوى والتفاعل عليه بالإعجاب.
+- إدارة الملف الشخصي.
+- نظام صلاحيات `user` و`admin`.
+- دعم SEO أساسي.
+- دعم الربح بالإعلانات (AdSense).
+- مسار مدفوعات Pro عبر Stripe (اختياري حسب نموذجك التجاري).
+
+## التقنيات
+- `Next.js` (App Router) + `TypeScript`
+- `Tailwind CSS`
+- `Supabase` (`Auth`, `Database`, `RLS`, `Storage`)
+- `Zustand`, `Formik`, `Yup`, `Framer Motion`
+- `Stripe`
+
+## هيكل المشروع
 ```txt
 src/
   app/
     [locale]/
-      page.tsx
-      login/page.tsx
-      register/page.tsx
-      profile/page.tsx
-      create-post/page.tsx
-      admin/page.tsx
+    api/stripe/
   components/
-    layout/
-    sections/
-    ui/
-  context/
-  data/
   hooks/
   lib/
   store/
   types/
   utils/
+public/
+supabase-init.sql
 ```
 
-## Environment
-Copy `.env.example` to `.env.local`:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
-
-> Never expose `SERVICE_ROLE_KEY` in frontend.
-
-## Supabase setup (step-by-step)
-1. Create a Supabase project.
-2. Open **Project Settings -> API** and copy URL + anon key.
-3. Create tables in SQL editor:
-
-```sql
-create table if not exists profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text unique not null,
-  full_name text,
-  avatar_url text,
-  role text not null default 'user' check (role in ('user','admin')),
-  created_at timestamptz default now()
-);
-
-create table if not exists posts (
-  id uuid primary key default gen_random_uuid(),
-  author_id uuid not null references profiles(id) on delete cascade,
-  content text not null,
-  image_url text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table if not exists likes (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references profiles(id) on delete cascade,
-  post_id uuid not null references posts(id) on delete cascade,
-  created_at timestamptz default now(),
-  unique (user_id, post_id)
-);
-```
-
-4. Create storage bucket for images:
-```sql
-insert into storage.buckets (id, name, public) values ('post-images', 'post-images', true)
-on conflict (id) do nothing;
-```
-
-5. Enable RLS and add policies:
-
-```sql
-alter table profiles enable row level security;
-alter table posts enable row level security;
-alter table likes enable row level security;
-
--- profiles
-create policy "read profiles" on profiles for select using (true);
-create policy "insert own profile" on profiles for insert with check (auth.uid() = id);
-create policy "update own profile" on profiles for update using (auth.uid() = id);
-create policy "admin delete profiles" on profiles for delete using (
-  exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
-);
-
--- posts
-create policy "read posts" on posts for select using (true);
-create policy "insert own posts" on posts for insert with check (auth.uid() = author_id);
-create policy "update own or admin posts" on posts for update using (
-  auth.uid() = author_id or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
-);
-create policy "delete own or admin posts" on posts for delete using (
-  auth.uid() = author_id or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
-);
-
--- likes
-create policy "read likes" on likes for select using (true);
-create policy "insert own likes" on likes for insert with check (auth.uid() = user_id);
-create policy "delete own likes" on likes for delete using (auth.uid() = user_id);
-```
-
-## Auth flow
-- Sign up / login via `supabase.auth` in `auth-form.tsx`.
-- Session is synced globally with Zustand in `use-auth-session.ts`.
-- `ProtectedRoute` guards profile/create/admin pages.
-
-## Roles system
-- Role lives in `profiles.role` (`user` / `admin`).
-- User: CRUD own posts + likes.
-- Admin: delete any post and delete profiles.
-
-## Run
+## التشغيل محليًا
+1. تثبيت dependencies:
 ```bash
 npm install
+```
+2. إنشاء ملف `.env.local` في جذر المشروع.
+3. إضافة كل المتغيرات المطلوبة (القسم التالي).
+4. تشغيل المشروع:
+```bash
 npm run dev
 ```
-Open: `http://localhost:3000`
+5. فتح `http://localhost:3000`.
 
-## Notes
-- App is frontend-focused and uses anon key only.
-- Deleting **Auth users** directly is not possible from frontend anon key; admin delete here targets `profiles` records. For full auth user deletion use a secure server/edge function.
+## متغيرات البيئة (Environment Variables)
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Google
+NEXT_PUBLIC_GOOGLE_ANALYTICS=
+NEXT_PUBLIC_GOOGLE_ADSENSE=
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+## منين أجيب كل متغير؟
+- `NEXT_PUBLIC_SUPABASE_URL`: من Supabase -> Project Settings -> API -> Project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: من Supabase -> API Keys -> `anon`/`publishable`.
+- `SUPABASE_SERVICE_ROLE_KEY`: من Supabase -> API Keys -> `service_role` (سري جدًا).
+- `NEXT_PUBLIC_GOOGLE_ANALYTICS`: من Google Analytics -> Data Stream -> Measurement ID (`G-...`).
+- `NEXT_PUBLIC_GOOGLE_ADSENSE`: من Google AdSense -> Account -> Publisher ID (`ca-pub-...`).
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: من Stripe Dashboard -> Developers -> API keys -> Publishable key.
+- `STRIPE_SECRET_KEY`: من Stripe Dashboard -> Developers -> API keys -> Secret key.
+- `STRIPE_WEBHOOK_SECRET`: من Stripe Dashboard -> Developers -> Webhooks -> Signing secret (`whsec_...`).
+- `NEXT_PUBLIC_APP_URL`: رابط الموقع النهائي (مثال: `https://your-domain.vercel.app`).
+
+## إعداد Supabase
+1. أنشئ مشروع Supabase.
+2. افتح SQL Editor.
+3. نفّذ ملف `supabase-init.sql`.
+4. تأكد من RLS والسياسات.
+5. (اختياري) أنشئ bucket للصور لو تدفقك يحتاجه.
+
+## Google Analytics
+1. ادخل [Google Analytics](https://analytics.google.com/).
+2. أنشئ Property للموقع.
+3. أنشئ Web Data Stream.
+4. خذ Measurement ID وأضفه في:
+```bash
+NEXT_PUBLIC_GOOGLE_ANALYTICS=G-XXXXXXXXXX
+```
+5. التكامل في الكود موجود عبر `src/components/layout/google-scripts.tsx`.
+
+## الربح من Google (AdSense)
+1. قدّم موقعك في [Google AdSense](https://www.google.com/adsense/start/).
+2. بعد القبول، انسخ Publisher ID:
+```bash
+NEXT_PUBLIC_GOOGLE_ADSENSE=ca-pub-XXXXXXXXXXXX
+```
+3. تأكد من وجود صفحات:
+   - Privacy Policy
+   - Terms
+   - Contact
+4. استخدم دومين واضح ومحتوى أصلي لزيادة فرصة الموافقة.
+
+## النشر على Vercel
+1. ارفع المشروع على GitHub.
+2. افتح [Vercel](https://vercel.com/) واعمل Import للريبو.
+3. Vercel يكتشف Next.js تلقائيًا.
+4. أضف Environment Variables نفسها في Vercel (Production + Preview).
+5. Deploy.
+6. بعد النشر:
+   - حدّث `NEXT_PUBLIC_APP_URL` بالرابط النهائي.
+   - أضف نفس الدومين في Supabase Auth redirect URLs.
+   - اختبر تسجيل الدخول والدفع والتحليلات.
+
+## أوامر مفيدة
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run typecheck
+```
+
+## ملاحظات أمان مهمة
+- لا ترفع `.env.local` إلى Git.
+- لا تشارك `STRIPE_SECRET_KEY` أو `SUPABASE_SERVICE_ROLE_KEY` أو `STRIPE_WEBHOOK_SECRET`.
+- اعمل rotate للمفاتيح لو حصل تسريب.
+- مفاتيح `NEXT_PUBLIC_*` تُعرض للعميل، فخليها للمفاتيح العامة فقط.
