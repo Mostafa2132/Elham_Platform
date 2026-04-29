@@ -243,7 +243,7 @@ export function PostCard({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className={`glass-card rounded-3xl p-6 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative group/card ${themeConfig.class}`}
+        className={`glass-card relative group/card rounded-3xl p-4 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-6 ${themeConfig.class}`}
       >
         {/* ─── Vault Saved Overlay ─── */}
         <AnimatePresence>
@@ -290,8 +290,8 @@ export function PostCard({
         </button>
       )}
         {/* Header */}
-        <div className="flex items-start justify-between mb-3" style={{ transform: "translateZ(20px)" }}>
-          <div className="flex items-center gap-3">
+        <div className="mb-3 flex items-start justify-between gap-2 sm:gap-3" style={{ transform: "translateZ(20px)" }}>
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <Link href={`/${locale}/profile/${post.author_id}`} className="hover:opacity-80 transition-opacity">
               <Avatar
                 src={post.profiles?.avatar_url}
@@ -299,9 +299,9 @@ export function PostCard({
                 size={40}
               />
             </Link>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <Link href={`/${locale}/profile/${post.author_id}`} className="font-medium text-sm leading-tight hover:text-indigo-400 transition-colors">
+                <Link href={`/${locale}/profile/${post.author_id}`} className="truncate font-medium text-sm leading-tight transition-colors hover:text-indigo-400">
                   {post.profiles?.full_name || post.profiles?.email?.split("@")[0] || (locale === "ar" ? "مجهول" : "Anonymous")}
                 </Link>
                 {/* Badge Display */}
@@ -325,45 +325,45 @@ export function PostCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2" style={{ transform: "translateZ(25px)" }}>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2" style={{ transform: "translateZ(25px)" }}>
           {/* Share/Zen Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <button
                onClick={() => setCreateOpen(true)}
-               className="p-2 rounded-xl text-muted hover:text-indigo-400 transition-all duration-300 hover:bg-indigo-400/5 active:scale-95"
+               className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-indigo-400/5 hover:text-indigo-400 active:scale-95 sm:p-2"
                title={t.flow.continue}
             >
-              <FiGitBranch size={18} />
+              <FiGitBranch size={16} />
             </button>
             <button
               onClick={() => setSupportOpen(true)}
-              className="p-2 rounded-xl text-muted hover:text-amber-500 transition-all duration-300 hover:bg-amber-500/5 active:scale-95"
+              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-amber-500/5 hover:text-amber-500 active:scale-95 sm:p-2"
               title={t.monetization.supportCreator}
             >
-              <FiCoffee size={18} />
+              <FiCoffee size={16} />
             </button>
             <button
               onClick={() => setZenOpen(true)}
-              className="p-2 rounded-xl text-muted hover:text-foreground transition-all duration-300 hover:bg-white/5 active:scale-95"
+              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
               title={locale === "ar" ? "وضع الزن" : "Zen Mode"}
             >
-              <FiSun size={18} className="hover:rotate-45 transition-transform" />
+              <FiSun size={16} className="transition-transform hover:rotate-45" />
             </button>
             <button
               onClick={() => setShowTemplateSelect(true)}
-              className="p-2 rounded-xl text-muted hover:text-foreground transition-all duration-300 hover:bg-white/5 active:scale-95"
+              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
             >
-              <FiDownload size={18} />
+              <FiDownload size={16} />
             </button>
           </div>
             <div className="relative group/menu">
                 <button
                   ref={menuBtnRef}
                   onClick={openMenu}
-                  className="p-2 rounded-full text-muted hover:bg-white/10 hover:text-[var(--foreground)] transition-all"
+                  className="rounded-full p-1.5 text-muted transition-all hover:bg-white/10 hover:text-[var(--foreground)] sm:p-2"
                   title={t.common.edit}
                 >
-                  <FiMoreHorizontal size={18} />
+                  <FiMoreHorizontal size={16} />
                 </button>
               </div>
             </div>

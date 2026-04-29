@@ -79,19 +79,19 @@ export function Navbar({ locale }: { locale: Locale }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 px-3 py-2.5">
+    <header className="sticky top-0 z-40 px-2 py-2 sm:px-3 sm:py-2.5">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5"
+        className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-2 py-2 sm:px-4 sm:py-2.5"
       >
         {/* الشعار ورابط الصفحة الرئيسية */}
         <Link
           href={`/${locale}`}
-          className="flex items-center gap-2 text-lg font-bold"
+          className="flex min-w-0 max-w-[44vw] items-center gap-1.5 text-lg font-bold sm:max-w-none sm:gap-2"
         >
-          <div className="relative h-8 w-8 shrink-0">
+          <div className="relative h-7 w-7 shrink-0 sm:h-8 sm:w-8">
             <Image
               src="/logo.png"
               alt="Elham Logo"
@@ -99,7 +99,9 @@ export function Navbar({ locale }: { locale: Locale }) {
               className="object-contain"
             />
           </div>
-          <span className="brand-gradient-text tracking-tight">{t.brand}</span>
+          <span className="brand-gradient-text hidden truncate tracking-tight min-[420px]:inline">
+            {t.brand}
+          </span>
         </Link>
 
         {/* Desktop nav */}
@@ -148,11 +150,11 @@ export function Navbar({ locale }: { locale: Locale }) {
         </nav>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           {/* Global Search Trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="btn-ghost rounded-full p-2 text-muted hover:text-indigo-400 transition-all hover:bg-indigo-500/10"
+            className="btn-ghost rounded-full p-1.5 text-muted transition-all hover:bg-indigo-500/10 hover:text-indigo-400 sm:p-2"
             aria-label="Search"
           >
             <FiSearch size={18} />
@@ -164,14 +166,14 @@ export function Navbar({ locale }: { locale: Locale }) {
           {/* Language switcher */}
           <Link
             href={`/${other}${clean}`}
-            className="btn-ghost rounded-lg px-2.5 py-1.5 text-xs font-medium"
+            className="btn-ghost rounded-lg px-2 py-1.5 text-xs font-medium sm:px-2.5"
           >
             {other.toUpperCase()}
           </Link>
 
           {/* Theme toggle */}
           <button
-            className="btn-ghost rounded-full p-2"
+            className="btn-ghost rounded-full p-1.5 sm:p-2"
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
@@ -213,7 +215,7 @@ export function Navbar({ locale }: { locale: Locale }) {
 
           {/* Mobile menu toggle */}
           <button
-            className="md:hidden btn-ghost rounded-full p-2"
+            className="btn-ghost rounded-full p-1.5 md:hidden sm:p-2"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
           >
