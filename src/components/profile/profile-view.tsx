@@ -50,36 +50,40 @@ export function ProfileView({ profileId }: ProfileViewProps) {
   useEffect(() => {
     if (!targetId) return;
     const load = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", targetId)
-        .single();
-      if (error || !data) {
-        toast.error("Profile not found");
-      } else {
-        setLocalProfile(data as Profile);
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", targetId)
+          .single();
+        if (error || !data) {
+          toast.error("Profile not found");
+        } else {
+          setLocalProfile(data as Profile);
+        }
+        
+        // Load follow stats
+        const [
+          { count: followersCount },
+          { count: followingCount },
+          { data: followStatus }
+        ] = await Promise.all([
+          supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetId),
+          supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", targetId),
+          user ? supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", targetId).maybeSingle() : Promise.resolve({ data: null })
+        ]);
+
+        setFollowStats({
+          followers: followersCount ?? 0,
+          following: followingCount ?? 0,
+          isFollowing: !!followStatus
+        });
+      } catch (err) {
+        console.error("Profile load failed:", err);
+      } finally {
+        setLoading(false);
       }
-      
-      // Load follow stats
-      const [
-        { count: followersCount },
-        { count: followingCount },
-        { data: followStatus }
-      ] = await Promise.all([
-        supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetId),
-        supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", targetId),
-        user ? supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", targetId).maybeSingle() : Promise.resolve({ data: null })
-      ]);
-
-      setFollowStats({
-        followers: followersCount ?? 0,
-        following: followingCount ?? 0,
-        isFollowing: !!followStatus
-      });
-
-      setLoading(false);
     };
     load();
   }, [targetId, supabase, user]);
@@ -104,21 +108,55 @@ export function ProfileView({ profileId }: ProfileViewProps) {
   useEffect(() => {
     if (!targetId) return;
     const loadPosts = async () => {
-      setPostsLoading(true);
-      const { data, error } = await supabase
-        .from("posts")
-        .select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro),is_authentic,seal_requested")
-        .eq("author_id", targetId)
-        .order("created_at", { ascending: false });
+      try {
+        setPostsLoading(true);
+        const { data } = await supabase
+          .from("posts")
+          .select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro),is_authentic,seal_requested")
+          .eq("author_id", targetId)
+          .order("created_at", { ascending: false });
 
-      if (data) {
-        const hydrated = await hydratePosts(data, user?.id, supabase);
-        setPosts(hydrated);
+        if (data) {
+          const hydrated = await hydratePosts(data, user?.id, supabase);
+          setPosts(hydrated);
+        }
+      } catch (err) {
+        console.error("Profile posts load failed:", err);
+      } finally {
+        setPostsLoading(false);
       }
-      setPostsLoading(false);
     };
     loadPosts();
   }, [targetId, supabase, user?.id]);
+
+  useEffect(() => {
+    if (!targetId) return;
+    const refreshVisibleData = () => {
+      if (document.visibilityState !== "visible") return;
+      if (activeTab === "Likes") loadLikes();
+      else if (activeTab === "Vault") loadVault(selectedCollection);
+      else {
+        // default tab refresh
+        supabase
+          .from("posts")
+          .select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro),is_authentic,seal_requested")
+          .eq("author_id", targetId)
+          .order("created_at", { ascending: false })
+          .then(async ({ data }) => {
+            if (!data) return;
+            const hydrated = await hydratePosts(data, user?.id, supabase);
+            setPosts(hydrated);
+          });
+      }
+    };
+
+    document.addEventListener("visibilitychange", refreshVisibleData);
+    window.addEventListener("online", refreshVisibleData);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshVisibleData);
+      window.removeEventListener("online", refreshVisibleData);
+    };
+  }, [activeTab, targetId, selectedCollection, user?.id]);
 
   /**
    * وظيفة مساعدة لترطيب المنشورات (جلب عدد الإعجابات وحالة الحفظ)

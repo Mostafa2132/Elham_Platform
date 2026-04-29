@@ -25,35 +25,46 @@ export function useAuthSession() {
     };
 
     const load = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-      if (!active) return;
-      setUser(user ?? null);
-
-      if (user) {
-        await ensureProfile(user);
-        const profile = await fetchProfile(user.id);
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data.user;
         if (!active) return;
-        setProfile(profile);
-      } else {
-        setProfile(null);
-      }
+        setUser(user ?? null);
 
-      setLoading(false);
+        if (user) {
+          await ensureProfile(user);
+          const profile = await fetchProfile(user.id);
+          if (!active) return;
+          setProfile(profile);
+        } else {
+          setProfile(null);
+        }
+      } catch (err) {
+        console.error("Auth session load failed:", err);
+        if (!active) return;
+        setUser(null);
+        setProfile(null);
+      } finally {
+        if (active) setLoading(false);
+      }
     };
 
     load();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (!session?.user) {
-          setProfile(null);
-          return;
+        try {
+          setUser(session?.user ?? null);
+          if (!session?.user) {
+            setProfile(null);
+            return;
+          }
+          await ensureProfile(session.user);
+          const profile = await fetchProfile(session.user.id);
+          setProfile(profile);
+        } catch (err) {
+          console.error("Auth state change handling failed:", err);
         }
-        await ensureProfile(session.user);
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
       }
     );
 

@@ -154,6 +154,28 @@ export function FeedList() {
     fetchPage(0);
   }, [fetchPage]);
 
+  // Refresh current feed when user returns to tab or network comes back
+  useEffect(() => {
+    const refreshFeed = () => {
+      setPage(0);
+      fetchPage(0);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshFeed();
+    };
+
+    const onOnline = () => refreshFeed();
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [fetchPage]);
+
   // مراقب التحديثات اللحظية للمنشورات الجديدة
   useEffect(() => {
     const channel = supabase
