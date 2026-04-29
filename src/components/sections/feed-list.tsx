@@ -20,6 +20,7 @@ import { useInteractionStore } from "@/store/interaction-store";
 // إعدادات عرض الصفحة (حجم الصفحة وعدد المنشورات بين الإعلانات)
 const PAGE_SIZE = 6;
 const AD_EVERY = 3; 
+const REQUEST_TIMEOUT_MS = 12000;
 
 /**
  * مكون خلاصة المنشورات (FeedList)
@@ -46,15 +47,27 @@ export function FeedList() {
   const isFetchingRef = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  const withTimeout = useCallback(async <T,>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+      ),
+    ]);
+  }, []);
+
   // تحميل الإعلانات المخصصة للخلاصة عند بدء التشغيل
   useEffect(() => {
-    supabase
-      .from("ads")
-      .select("*")
-      .eq("active", true)
-      .in("placement", ["feed", "both"])
-      .then(({ data }) => setAds((data ?? []) as Ad[]));
-  }, [supabase]);
+    withTimeout(
+      supabase
+        .from("ads")
+        .select("*")
+        .eq("active", true)
+        .in("placement", ["feed", "both"])
+    )
+      .then(({ data }) => setAds((data ?? []) as Ad[]))
+      .catch(() => setAds([]));
+  }, [supabase, withTimeout]);
 
   /**
    * وظيفة جلب البيانات من Supabase
@@ -71,13 +84,15 @@ export function FeedList() {
         const from = targetPage * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
 
-        const { data, error } = await supabase
-          .from("posts")
-          .select(
-            "id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro)"
-          )
-          .order("created_at", { ascending: false })
-          .range(from, to);
+        const { data, error } = await withTimeout(
+          supabase
+            .from("posts")
+            .select(
+              "id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro)"
+            )
+            .order("created_at", { ascending: false })
+            .range(from, to)
+        );
 
         if (error) {
           toast.error(error.message);
@@ -96,10 +111,12 @@ export function FeedList() {
 
         if (hydrated.length) {
           const postIds = hydrated.map((p) => p.id);
-          const { data: likeCounts } = await supabase
-            .from("likes")
-            .select("post_id")
-            .in("post_id", postIds);
+          const { data: likeCounts } = await withTimeout(
+            supabase
+              .from("likes")
+              .select("post_id")
+              .in("post_id", postIds)
+          );
 
           const counts =
             (likeCounts as { post_id: string }[] | null)?.reduce((acc: Record<string, number>, item) => {
@@ -114,10 +131,10 @@ export function FeedList() {
             const [
               { data: myLikes },
               { data: mySaves }
-            ] = await Promise.all([
+            ] = await withTimeout(Promise.all([
               supabase.from("likes").select("post_id").eq("user_id", user.id).in("post_id", postIds),
               supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds)
-            ]);
+            ]));
             
             likedIds = new Set((myLikes as { post_id: string }[] | null ?? []).map((l) => l.post_id));
             savedIds = new Set((mySaves as { post_id: string }[] | null ?? []).map((s) => s.post_id));
@@ -147,7 +164,7 @@ export function FeedList() {
         isFetchingRef.current = false;
       }
     },
-    [supabase, user, locale]
+    [supabase, user, locale, withTimeout]
   );
 
   useEffect(() => {

@@ -43,20 +43,33 @@ export function ProfileView({ profileId }: ProfileViewProps) {
   const [followLoading, setFollowLoading] = useState(false);
   const [collections, setCollections] = useState<{id: string, name: string}[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const REQUEST_TIMEOUT_MS = 12000;
+
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Request timeout")), timeoutMs)),
+    ]);
+  };
 
   const targetId = profileId ?? user?.id;
   const isOwn = !profileId || profileId === user?.id;
 
   useEffect(() => {
-    if (!targetId) return;
+    if (!targetId) {
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", targetId)
-          .single();
+        const { data, error } = await withTimeout(
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", targetId)
+            .single()
+        );
         if (error || !data) {
           toast.error("Profile not found");
         } else {
@@ -68,11 +81,11 @@ export function ProfileView({ profileId }: ProfileViewProps) {
           { count: followersCount },
           { count: followingCount },
           { data: followStatus }
-        ] = await Promise.all([
+        ] = await withTimeout(Promise.all([
           supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetId),
           supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", targetId),
           user ? supabase.from("follows").select("*").eq("follower_id", user.id).eq("following_id", targetId).maybeSingle() : Promise.resolve({ data: null })
-        ]);
+        ]));
 
         setFollowStats({
           followers: followersCount ?? 0,
@@ -106,15 +119,20 @@ export function ProfileView({ profileId }: ProfileViewProps) {
   };
 
   useEffect(() => {
-    if (!targetId) return;
+    if (!targetId) {
+      setPostsLoading(false);
+      return;
+    }
     const loadPosts = async () => {
       try {
         setPostsLoading(true);
-        const { data } = await supabase
-          .from("posts")
-          .select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro),is_authentic,seal_requested")
-          .eq("author_id", targetId)
-          .order("created_at", { ascending: false });
+        const { data } = await withTimeout(
+          supabase
+            .from("posts")
+            .select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro),is_authentic,seal_requested")
+            .eq("author_id", targetId)
+            .order("created_at", { ascending: false })
+        );
 
         if (data) {
           const hydrated = await hydratePosts(data, user?.id, supabase);
