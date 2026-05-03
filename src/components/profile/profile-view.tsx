@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiEdit3, FiMapPin, FiLink, FiTwitter, FiInstagram, FiGithub, FiCalendar, FiMail, FiCoffee, FiZap, FiArchive, FiLock, FiTrash2 } from "react-icons/fi";
+import { FiEdit3, FiMapPin, FiLink, FiTwitter, FiInstagram, FiGithub, FiCalendar, FiMail, FiCoffee, FiZap, FiArchive, FiLock, FiTrash2, FiMessageCircle } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
@@ -404,6 +405,12 @@ export function ProfileView({ profileId }: ProfileViewProps) {
                     >
                       {followLoading ? "..." : (followStats.isFollowing ? (locale === "ar" ? "إلغاء المتابعة" : "Unfollow") : (locale === "ar" ? "متابعة" : "Follow"))}
                     </button>
+                    <Link 
+                      href={`/${locale}/chat?user=${targetId}`}
+                      className="btn-ghost flex items-center justify-center gap-2 text-sm bg-white/5 border border-white/10 shadow-sm px-6 h-10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all font-bold"
+                    >
+                      <FiMessageCircle size={16} /> {locale === "ar" ? "مراسلة" : "Message"}
+                    </Link>
                     <button onClick={() => toast.success("Simulating checkout... Thanks for supporting!")} className="btn-primary flex items-center gap-2 text-sm bg-gradient-to-r from-amber-500 to-orange-500 border-none text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40">
                       <FiCoffee size={14} /> {t.monetization.supportCreator}
                     </button>

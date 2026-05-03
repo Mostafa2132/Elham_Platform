@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSend, FiUser, FiSearch, FiMoreVertical, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
+import { useSearchParams } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
 import { useInteractionStore } from "@/store/interaction-store";
@@ -31,6 +32,8 @@ export function ChatView({ locale }: { locale: Locale }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const t = translations[locale];
 
+  const searchParams = useSearchParams();
+
   // Load conversations (users I have talked to or all users for simplicity in MVP)
   useEffect(() => {
     if (!user) return;
@@ -40,11 +43,35 @@ export function ChatView({ locale }: { locale: Locale }) {
         .select("*")
         .neq("id", user.id)
         .limit(20);
-      setConversations((data ?? []) as Profile[]);
+      
+      let usersList = (data ?? []) as Profile[];
+      
+      // Handle direct message link from profile
+      const targetUserId = searchParams?.get("user");
+      if (targetUserId && targetUserId !== user.id) {
+        const existingUser = usersList.find(u => u.id === targetUserId);
+        if (existingUser) {
+          setSelectedUser(existingUser);
+        } else {
+          // User not in recent conversations, fetch them directly
+          const { data: targetData } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", targetUserId)
+            .single();
+            
+          if (targetData) {
+            usersList = [targetData as Profile, ...usersList];
+            setSelectedUser(targetData as Profile);
+          }
+        }
+      }
+      
+      setConversations(usersList);
       setLoading(false);
     };
     loadUsers();
-  }, [user, supabase]);
+  }, [user, supabase, searchParams]);
 
   // Load messages when a user is selected
   useEffect(() => {
