@@ -79,7 +79,7 @@ export function Navbar({ locale }: { locale: Locale }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 px-2 py-2 sm:px-3 sm:py-2.5">
+    <header className="sticky top-0 z-[100] px-2 py-2 sm:px-3 sm:py-2.5">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
