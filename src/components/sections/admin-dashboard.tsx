@@ -18,6 +18,7 @@ import { compressImage } from "@/lib/image-compression";
 import { useParams } from "next/navigation";
 import { translations } from "@/data/translations";
 import { type Profile, type Post, type Ad, type Announcement, type Locale } from "@/types";
+import { POST_THEMES } from "@/lib/constants";
 
 type AdminTab = "analytics" | "leaderboard" | "users" | "posts" | "ads" | "announcements" | "master" | "requests";
 
@@ -406,21 +407,44 @@ export function AdminDashboard() {
                     <div className="space-y-4">
                       {(() => {
                         const total = posts.length || 1;
-                        const cats = [
-                          { label: isAr ? "حكمة ومقولات" : "Wisdom & Quotes", keys: ["wisdom", "quote", "حكمة", "مقولة", "قال"] },
-                          { label: isAr ? "قصص حياة" : "Life Stories", keys: ["story", "life", "حياة", "قصة"] },
-                          { label: isAr ? "تكنولوجيا" : "Technology", keys: ["tech", "code", "ai", "تقنية", "ذكاء"] },
-                        ];
                         
-                        const counts = cats.map(cat => {
-                          const count = posts.filter(p => cat.keys.some(k => p.content.toLowerCase().includes(k))).length;
-                          return { label: cat.label, val: Math.round((count / total) * 100) };
+                        // Extract actual tags used in posts
+                        const themeCounts: Record<string, number> = {};
+                        let untagged = 0;
+
+                        posts.forEach(p => {
+                          const match = p.content.match(/\[T:([\w-]+)\]/);
+                          if (match && match[1]) {
+                            const tag = match[1];
+                            themeCounts[tag] = (themeCounts[tag] || 0) + 1;
+                          } else {
+                            untagged++;
+                          }
                         });
 
-                        const othersVal = Math.max(0, 100 - counts.reduce((acc, c) => acc + c.val, 0));
-                        const finalStats = [...counts, { label: isAr ? "أخرى" : "Others", val: othersVal }];
+                        // Map tag IDs to beautiful names using POST_THEMES
+                        const statsList = Object.entries(themeCounts).map(([tagId, count]) => {
+                          const themeObj = POST_THEMES.find(t => t.id === tagId);
+                          const label = themeObj ? themeObj.name : tagId.charAt(0).toUpperCase() + tagId.slice(1);
+                          return { label, val: Math.round((count / total) * 100), count };
+                        });
 
-                        return finalStats.map((item, i) => (
+                        // Sort by most used and take top 4
+                        statsList.sort((a, b) => b.count - a.count);
+                        const topStats = statsList.slice(0, 4);
+
+                        // If there are very few tags, fallback to general stats
+                        if (topStats.length === 0 && untagged > 0) {
+                          topStats.push({ label: isAr ? "كلاسيكي (بدون تيم)" : "Classic (No Theme)", val: 100, count: untagged });
+                        } else if (untagged > 0) {
+                          const topTotal = topStats.reduce((sum, item) => sum + item.val, 0);
+                          const othersVal = Math.max(0, 100 - topTotal);
+                          if (othersVal > 0) {
+                            topStats.push({ label: isAr ? "أخرى / كلاسيكي" : "Classic / Others", val: othersVal, count: untagged });
+                          }
+                        }
+
+                        return topStats.map((item, i) => (
                           <div key={item.label} className="space-y-1.5">
                             <div className="flex justify-between text-[11px] font-bold uppercase tracking-wide">
                               <span>{item.label}</span>
