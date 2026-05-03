@@ -507,12 +507,16 @@ export function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-around sm:justify-end w-full sm:w-auto gap-4 sm:gap-8 shrink-0 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/10">
-                          <div className="text-center min-w-[70px] sm:min-w-[80px]">
+                        <div className="flex items-center justify-center sm:justify-end w-full sm:w-auto shrink-0 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/10">
+                          <div className="text-center flex-1 sm:flex-none sm:min-w-[80px]">
                             <p className="text-xl sm:text-2xl font-black brand-gradient-text leading-none">{u.posts_count}</p>
                             <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.postsCount}</p>
                           </div>
-                          <div className="text-center min-w-[70px] sm:min-w-[80px] border-l border-white/10 pl-4 sm:pl-8">
+
+                          {/* فاصل وسطي دقيق */}
+                          <div className="w-[1px] h-10 bg-white/10 mx-4 sm:mx-6 shrink-0" />
+
+                          <div className="text-center flex-1 sm:flex-none sm:min-w-[80px]">
                             <p className="text-xl sm:text-2xl font-black text-cyan-400 leading-none">{u.likes_count}</p>
                             <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.interactions}</p>
                           </div>
