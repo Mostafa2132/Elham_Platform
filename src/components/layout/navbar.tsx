@@ -84,7 +84,7 @@ export function Navbar({ locale }: { locale: Locale }) {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-2 py-2 sm:px-4 sm:py-2.5"
+        className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-2 py-2 sm:px-4 sm:py-2.5 max-md:!bg-[var(--bg)]/95 max-md:!backdrop-blur-2xl"
       >
         {/* الشعار ورابط الصفحة الرئيسية */}
         <Link
