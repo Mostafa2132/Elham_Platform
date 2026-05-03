@@ -18,9 +18,9 @@ import { RitualBanner } from "@/components/sections/ritual-banner";
 import { useInteractionStore } from "@/store/interaction-store";
 
 // إعدادات عرض الصفحة (حجم الصفحة وعدد المنشورات بين الإعلانات)
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 const AD_EVERY = 3; 
-const REQUEST_TIMEOUT_MS = 12000;
+const REQUEST_TIMEOUT_MS = 15000;
 
 /**
  * مكون خلاصة المنشورات (FeedList)
@@ -34,6 +34,10 @@ export function FeedList() {
 
   const supabase = getSupabase();
   const { user, profile } = useAuthStore();
+  
+  // نستخدم ref للـ userId عشان نمنع إعادة تشغيل fetchPage عند كل تغيير في الـ auth state
+  const userIdRef = useRef<string | null>(user?.id ?? null);
+  useEffect(() => { userIdRef.current = user?.id ?? null; }, [user]);
   
   // حالات تخزين المنشورات والإعلانات والتحميل
   const [posts, setPosts] = useState<Post[]>([]);
@@ -76,8 +80,8 @@ export function FeedList() {
   }, [supabase, withTimeout]);
 
   /**
-   * وظيفة جلب البيانات من Supabase
-   * تدعم الصفحات (Pagination) لتحسين الأداء وتقليل استهلاك البيانات
+   * وظيفة جلب البيانات من Supabase - محسّنة بـ Parallel Queries
+   * بدلاً من 3-4 رحلات متسلسلة، بنبعت طلبين بالتوازي فقط
    */
   const fetchPage = useCallback(
     async (targetPage: number) => {
@@ -89,15 +93,31 @@ export function FeedList() {
       try {
         const from = targetPage * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
+        const currentUserId = userIdRef.current;
 
-        const { data, error } = await withTimeout(
-          supabase
-            .from("posts")
-            .select(
-              "id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email,username,is_pro)"
-            )
-            .order("created_at", { ascending: false })
-            .range(from, to)
+        // 🚀 طلب واحد يجيب المنشورات + likes count مدمجة
+        const postsQuery = supabase
+          .from("posts")
+          .select(
+            `id, author_id, content, image_url, created_at, updated_at,
+            is_authentic, seal_requested,
+            profiles(full_name, avatar_url, email, username, is_pro),
+            likes(count)`
+          )
+          .order("created_at", { ascending: false })
+          .range(from, to);
+
+        // 🚀 طلبان للمستخدم يشتغلان بالتوازي مع طلب المنشورات
+        const userQueriesPromise = currentUserId
+          ? Promise.all([
+              supabase.from("likes").select("post_id").eq("user_id", currentUserId),
+              supabase.from("saved_posts").select("post_id").eq("user_id", currentUserId),
+            ])
+          : Promise.resolve([{ data: null }, { data: null }] as const);
+
+        // ⚡ نبعتهم كلهم بالتوازي
+        const [{ data, error }, userResults] = await withTimeout(
+          Promise.all([postsQuery, userQueriesPromise])
         );
 
         if (error) {
@@ -105,57 +125,31 @@ export function FeedList() {
           return;
         }
 
+        const [{ data: myLikes }, { data: mySaves }] = userResults as [
+          { data: { post_id: string }[] | null },
+          { data: { post_id: string }[] | null }
+        ];
+
+        const likedIds = new Set((myLikes ?? []).map((l) => l.post_id));
+        const savedIds = new Set((mySaves ?? []).map((s) => s.post_id));
+
         const hydrated: Post[] = (data ?? []).map((item) => {
           const record = item as Record<string, unknown>;
+          const likesArr = record.likes as { count: number }[] | null;
           return {
             ...record,
             profiles: Array.isArray(record.profiles)
               ? record.profiles[0] ?? null
               : record.profiles,
+            likes_count: likesArr?.[0]?.count ?? 0,
+            liked_by_me: likedIds.has(record.id as string),
+            saved_by_me: savedIds.has(record.id as string),
           } as Post;
         });
 
-        if (hydrated.length) {
-          const postIds = hydrated.map((p) => p.id);
-          const { data: likeCounts } = await withTimeout(
-            supabase
-              .from("likes")
-              .select("post_id")
-              .in("post_id", postIds)
-          );
-
-          const counts =
-            (likeCounts as { post_id: string }[] | null)?.reduce((acc: Record<string, number>, item) => {
-              acc[item.post_id] = (acc[item.post_id] ?? 0) + 1;
-              return acc;
-            }, {} as Record<string, number>) ?? {};
-
-          let likedIds = new Set<string>();
-          let savedIds = new Set<string>();
-          
-          if (user) {
-            const [
-              { data: myLikes },
-              { data: mySaves }
-            ] = await withTimeout(Promise.all([
-              supabase.from("likes").select("post_id").eq("user_id", user.id).in("post_id", postIds),
-              supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds)
-            ]));
-            
-            likedIds = new Set((myLikes as { post_id: string }[] | null ?? []).map((l) => l.post_id));
-            savedIds = new Set((mySaves as { post_id: string }[] | null ?? []).map((s) => s.post_id));
-          }
-
-          hydrated.forEach((p) => {
-            p.liked_by_me = likedIds.has(p.id);
-            p.saved_by_me = savedIds.has(p.id);
-            p.likes_count = counts[p.id] ?? 0;
-          });
-
-          // مزامنة البيانات مع المخزن العام (Global Store)
-          useInteractionStore.getState().addLikedPosts(Array.from(likedIds));
-          useInteractionStore.getState().addSavedPosts(Array.from(savedIds));
-        }
+        // مزامنة البيانات مع المخزن العام (Global Store)
+        useInteractionStore.getState().addLikedPosts(Array.from(likedIds));
+        useInteractionStore.getState().addSavedPosts(Array.from(savedIds));
 
         setPosts((prev) =>
           targetPage === 0 ? hydrated : [...prev, ...hydrated]
@@ -170,7 +164,8 @@ export function FeedList() {
         isFetchingRef.current = false;
       }
     },
-    [supabase, user, locale, withTimeout]
+    // ✅ نستخدم supabase و locale و withTimeout فقط — مش user مباشرة
+    [supabase, locale, withTimeout]
   );
 
   useEffect(() => {
