@@ -8,7 +8,7 @@ import * as Yup from "yup";
 import {
   FiUsers, FiFileText, FiSpeaker, FiBarChart2, FiImage,
   FiTrash2, FiToggleLeft, FiToggleRight, FiBell, FiPlusCircle,
-  FiRefreshCw, FiX, FiZap, FiShield, FiStar, FiCheckCircle
+  FiRefreshCw, FiX, FiZap, FiShield, FiStar, FiCheckCircle, FiAlertTriangle
 } from "react-icons/fi";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
@@ -20,7 +20,7 @@ import { translations } from "@/data/translations";
 import { type Profile, type Post, type Ad, type Announcement, type Locale } from "@/types";
 import { POST_THEMES } from "@/lib/constants";
 
-type AdminTab = "analytics" | "leaderboard" | "users" | "posts" | "ads" | "announcements" | "master" | "requests";
+type AdminTab = "analytics" | "leaderboard" | "users" | "posts" | "ads" | "announcements" | "master" | "requests" | "reports";
 
 const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
   { id: "analytics", label: "Analytics", icon: <FiBarChart2 /> },
@@ -30,6 +30,7 @@ const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
   { id: "ads", label: "Ads", icon: <FiSpeaker /> },
   { id: "announcements", label: "Announcements", icon: <FiBell /> },
   { id: "requests", label: "Requests", icon: <FiShield /> },
+  { id: "reports", label: "Reports", icon: <FiAlertTriangle /> },
   { id: "master", label: "Master", icon: <FiZap /> },
 ];
 
@@ -54,6 +55,7 @@ export function AdminDashboard() {
   const [addAdOpen, setAddAdOpen] = useState(false);
   const [addAnnOpen, setAddAnnOpen] = useState(false);
   const [requests, setRequests] = useState<Post[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
 
 
   const load = useCallback(async () => {
@@ -63,6 +65,7 @@ export function AdminDashboard() {
       { data: p },
       { data: a },
       { data: ann },
+      { data: rep },
       { count: uc },
       { count: pc },
       { count: ac },
@@ -72,6 +75,7 @@ export function AdminDashboard() {
       supabase.from("posts").select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email),seal_requested,is_authentic").order("created_at", { ascending: false }).limit(50),
       supabase.from("ads").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("reports").select("*,profiles(full_name,email,avatar_url)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("posts").select("*", { count: "exact", head: true }),
       supabase.from("ads").select("*", { count: "exact", head: true }),
@@ -88,6 +92,7 @@ export function AdminDashboard() {
     setRequests(hydratedPosts.filter(p => (p as any).seal_requested && !p.is_authentic));
     setAds((a ?? []) as Ad[]);
     setAnnouncements((ann ?? []) as Announcement[]);
+    setReports((rep ?? []) as any[]);
     setStats({ users: uc ?? 0, posts: pc ?? 0, ads: ac ?? 0, likes: lc ?? 0 });
 
     // Build Leaderboard Data
@@ -727,6 +732,81 @@ export function AdminDashboard() {
                         </div>
                         <p className="text-muted italic">{t.masterAdmin.noRequests}</p>
                       </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {tab === "reports" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <FiAlertTriangle className="text-amber-500" />
+                      {locale === "ar" ? "البلاغات والمشاكل" : "Bug Reports & Issues"}
+                    </h3>
+                  </div>
+                  
+                  <div className="grid gap-4">
+                    {reports.length === 0 ? (
+                      <div className="py-20 glass rounded-3xl border border-dashed border-white/10 text-center">
+                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                          <FiCheckCircle size={30} className="text-muted opacity-20" />
+                        </div>
+                        <p className="text-muted italic">{locale === "ar" ? "لا توجد بلاغات" : "No reports found"}</p>
+                      </div>
+                    ) : (
+                      reports.map(r => (
+                        <div key={r.id} className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-white/5 hover:border-amber-500/20 transition-colors">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-500'}`}>
+                                {r.status.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-muted uppercase font-bold tracking-wider">{r.report_type}</span>
+                              <span className="text-xs text-muted">- {new Date(r.created_at).toLocaleDateString(locale)}</span>
+                            </div>
+                            <p className="font-medium text-sm mb-2 text-white/90">{r.description}</p>
+                            <div className="flex items-center gap-2">
+                              <Avatar src={r.profiles?.avatar_url} size={20} />
+                              <p className="text-xs text-muted">{r.profiles?.full_name || r.profiles?.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {r.status === 'pending' && (
+                              <button
+                                onClick={async () => {
+                                  await supabase.from("reports").update({ status: 'resolved' }).eq("id", r.id);
+                                  
+                                  // Send notification to the user
+                                  await supabase.from("notifications").insert({
+                                    user_id: r.user_id,
+                                    type: "report_resolved",
+                                    content: locale === "ar" ? "تم حل المشكلة التي أبلغت عنها. شكراً لك! 🎉" : "The problem you reported has been resolved. Thank you! 🎉"
+                                  });
+
+                                  toast.success(locale === "ar" ? "تم تحديد البلاغ كـ محلول!" : "Report marked as resolved!");
+                                  load();
+                                }}
+                                className="btn-primary px-4 py-2 rounded-xl text-xs font-bold"
+                              >
+                                {locale === "ar" ? "تحديد كـ محلولة" : "Mark Resolved"}
+                              </button>
+                            )}
+                            <button
+                              onClick={async () => {
+                                if(confirm(locale === "ar" ? "هل أنت متأكد من حذف البلاغ؟" : "Delete report?")) {
+                                  await supabase.from("reports").delete().eq("id", r.id);
+                                  load();
+                                }
+                              }}
+                              className="p-2.5 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                              title="Delete"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>

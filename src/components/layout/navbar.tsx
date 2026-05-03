@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { FiPower, FiMoon, FiSun, FiMenu, FiX, FiSearch } from "react-icons/fi";
+import { FiPower, FiMoon, FiSun, FiMenu, FiX, FiSearch, FiAlertTriangle } from "react-icons/fi";
 import { useState, useEffect } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { translations } from "@/data/translations";
@@ -16,6 +16,7 @@ import { Modal } from "@/components/ui/modal";
 import { UnifiedSearch } from "@/components/ui/unified-search";
 import Image from "next/image";
 import { NotificationPopover } from "@/components/ui/notification-popover";
+import { toast } from "react-toastify";
 
 /**
  * مكون شريط التنقل العلوي (Navbar)
@@ -64,6 +65,10 @@ export function Navbar({ locale }: { locale: Locale }) {
   // حالات التحكم في قائمة الموبايل ومودال تسجيل الخروج والبحث
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportDesc, setReportDesc] = useState("");
+  const [reportType, setReportType] = useState("bug");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // منطق التبديل بين اللغات (عربي/إنجليزي)
@@ -76,6 +81,24 @@ export function Navbar({ locale }: { locale: Locale }) {
     setMenuOpen(false);
     await supabase.auth.signOut();
     router.push(`/${locale}/login`);
+  };
+
+  const handleReport = async () => {
+    if (!reportDesc.trim() || !user) return;
+    setIsSubmittingReport(true);
+    const { error } = await supabase.from("reports").insert({
+      user_id: user.id,
+      report_type: reportType,
+      description: reportDesc.trim()
+    });
+    setIsSubmittingReport(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(locale === "ar" ? "تم إرسال بلاغك بنجاح. شكراً لك!" : "Report submitted successfully. Thank you!");
+      setShowReportModal(false);
+      setReportDesc("");
+    }
   };
 
   return (
@@ -199,6 +222,18 @@ export function Navbar({ locale }: { locale: Locale }) {
               </Link>
               <div className="w-[1px] h-4 bg-white/10 mx-1" />
               <button
+                className="p-1.5 rounded-full text-muted hover:text-amber-500 transition-all duration-300 relative group/btn"
+                onClick={() => setShowReportModal(true)}
+                title={locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.15, rotate: 10 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  <FiAlertTriangle size={16} className="group-hover/btn:drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                </motion.div>
+              </button>
+              <button
                 className="p-1.5 rounded-full text-muted hover:text-red-500 transition-all duration-300 relative group/btn"
                 onClick={() => setShowLogoutModal(true)}
                 aria-label="Logout"
@@ -261,6 +296,16 @@ export function Navbar({ locale }: { locale: Locale }) {
               <button
                 onClick={() => {
                   setMenuOpen(false);
+                  setShowReportModal(true);
+                }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-[var(--glass)] transition-colors text-amber-500"
+              >
+                <FiAlertTriangle size={16} />
+                {locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
                 className="w-full flex items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-sm font-bold bg-red-500/5 hover:bg-red-500/10 text-red-400 border border-red-500/10 transition-all duration-300 group"
@@ -301,6 +346,48 @@ export function Navbar({ locale }: { locale: Locale }) {
             </button>
             <button onClick={logout} className="btn-primary bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-0">
               {t.nav.logout}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Report a Problem Modal */}
+      <Modal open={showReportModal} onClose={() => setShowReportModal(false)} title={locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-muted mb-2 block">
+              {locale === "ar" ? "نوع المشكلة" : "Problem Type"}
+            </label>
+            <select 
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 ring-amber-500/30 transition-all [&>option]:bg-gray-900"
+            >
+              <option value="bug">{locale === "ar" ? "مشكلة تقنية (Bug)" : "Technical Bug"}</option>
+              <option value="user">{locale === "ar" ? "مستخدم مزعج" : "Spam/Abusive User"}</option>
+              <option value="post">{locale === "ar" ? "منشور مخالف" : "Inappropriate Post"}</option>
+              <option value="other">{locale === "ar" ? "شيء آخر" : "Other"}</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted mb-2 block">
+              {locale === "ar" ? "وصف المشكلة" : "Description"}
+            </label>
+            <textarea 
+              rows={4}
+              value={reportDesc}
+              onChange={(e) => setReportDesc(e.target.value)}
+              placeholder={locale === "ar" ? "اشرح المشكلة بالتفصيل..." : "Describe the problem in detail..."}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 ring-amber-500/30 transition-all resize-none"
+            />
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowReportModal(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">
+              {locale === "ar" ? "إلغاء" : "Cancel"}
+            </button>
+            <button onClick={handleReport} disabled={isSubmittingReport || !reportDesc.trim()} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/20">
+              {isSubmittingReport ? "..." : (locale === "ar" ? "إرسال البلاغ" : "Submit Report")}
             </button>
           </div>
         </div>

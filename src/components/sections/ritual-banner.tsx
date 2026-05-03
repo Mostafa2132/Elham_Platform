@@ -20,10 +20,8 @@ export function RitualBanner({ locale }: { locale: Locale }) {
       const { data } = await supabase
         .from("rituals")
         .select("content")
-        .eq("active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+        .eq("id", "daily_ritual")
+        .maybeSingle();
       
       if (data) setRitual(data.content);
       setLoading(false);
@@ -34,15 +32,22 @@ export function RitualBanner({ locale }: { locale: Locale }) {
     // Subscribe to changes
     const channel = supabase
       .channel("ritual-updates")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "rituals" }, (payload) => {
-        setRitual(payload.new.content);
+      .on("postgres_changes", { event: "*", schema: "public", table: "rituals" }, (payload) => {
+        if (payload.new && "content" in payload.new) {
+          setRitual((payload.new as any).content);
+        }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
-  if (loading || !ritual) return null;
+  if (loading) return null;
+  if (!ritual) return (
+    <div className="text-center text-xs text-rose-500 my-4 opacity-50">
+      [Debug] No active ritual found in the database. Make sure the rituals-schema.sql was run successfully and a ritual is set.
+    </div>
+  );
 
   return (
     <motion.div 
