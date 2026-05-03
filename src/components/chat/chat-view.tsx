@@ -108,8 +108,15 @@ export function ChatView({ locale }: { locale: Locale }) {
           const msg = payload.new as Message;
           if (msg.sender_id === selectedUser.id) {
             setMessages((prev) => [...prev, msg]);
-            // Scroll to bottom on receive if user is chatting
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            // Scroll ONLY the chat container down
+            setTimeout(() => {
+              if (messagesEndRef.current?.parentElement) {
+                messagesEndRef.current.parentElement.scrollTo({
+                  top: messagesEndRef.current.parentElement.scrollHeight,
+                  behavior: "smooth"
+                });
+              }
+            }, 50);
             // صفر العداد فوراً لأننا نشاهد المحادثة حالياً
             resetUnreadForUser(selectedUser.id);
           }
@@ -138,7 +145,16 @@ export function ChatView({ locale }: { locale: Locale }) {
 
     setMessages((prev) => [...prev, data as Message]);
     setNewMessage("");
-    // Note: We are NOT calling scrollIntoView here as per user request "مش عاوز لما ابعت رساله كدا يحصل اسكرول لتحت"
+    
+    // Scroll ONLY the chat container, not the whole page
+    setTimeout(() => {
+      if (messagesEndRef.current?.parentElement) {
+        messagesEndRef.current.parentElement.scrollTo({
+          top: messagesEndRef.current.parentElement.scrollHeight,
+          behavior: "smooth"
+        });
+      }
+    }, 50);
   };
 
   if (!user) return <div className="p-20 text-center glass rounded-3xl">{t.auth.pleaseLogin}</div>;

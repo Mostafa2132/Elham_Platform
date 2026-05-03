@@ -391,13 +391,13 @@ export function ProfileView({ profileId }: ProfileViewProps) {
               <div className="ring-4 ring-[var(--bg-soft)] rounded-full bg-[var(--bg-soft)] shrink-0">
                 <Avatar src={profile.avatar_url} name={profile.full_name ?? profile.email} size={80} />
               </div>
-              <div className="flex items-center gap-2 mt-12">
+              <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                 {!isOwn && (
                   <>
                     <button 
                       onClick={toggleFollow}
                       disabled={followLoading}
-                      className={`btn-primary px-6 h-10 text-sm font-bold rounded-2xl transition-all ${
+                      className={`btn-primary px-4 sm:px-6 h-10 text-sm font-bold rounded-2xl transition-all ${
                         followStats.isFollowing 
                           ? "bg-white/10 text-white border border-white/10 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20" 
                           : "bg-indigo-600 text-white border-none shadow-lg shadow-indigo-600/20"
@@ -407,12 +407,17 @@ export function ProfileView({ profileId }: ProfileViewProps) {
                     </button>
                     <Link 
                       href={`/${locale}/chat?user=${targetId}`}
-                      className="btn-ghost flex items-center justify-center gap-2 text-sm bg-white/5 border border-white/10 shadow-sm px-6 h-10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all font-bold"
+                      className="btn-ghost flex items-center justify-center gap-2 text-sm bg-white/5 border border-white/10 shadow-sm px-4 sm:px-6 h-10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all font-bold"
                     >
                       <FiMessageCircle size={16} /> {locale === "ar" ? "مراسلة" : "Message"}
                     </Link>
-                    <button onClick={() => toast.success("Simulating checkout... Thanks for supporting!")} className="btn-primary flex items-center gap-2 text-sm bg-gradient-to-r from-amber-500 to-orange-500 border-none text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40">
-                      <FiCoffee size={14} /> {t.monetization.supportCreator}
+                    <button 
+                      onClick={() => toast.success("Simulating checkout... Thanks for supporting!")} 
+                      className="relative flex items-center justify-center gap-2 text-sm font-black text-white bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 border border-white/20 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-300 h-10 px-5 rounded-2xl whitespace-nowrap overflow-hidden group"
+                    >
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <FiCoffee size={16} className="drop-shadow-md group-hover:-rotate-12 group-hover:scale-110 transition-transform duration-300" /> 
+                      <span className="drop-shadow-md relative z-10">{t.monetization.supportCreator}</span>
                     </button>
                   </>
                 )}

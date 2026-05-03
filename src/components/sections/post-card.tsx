@@ -312,24 +312,24 @@ export function PostCard({
       )}
         {/* Header */}
         <div className="mb-3 flex items-start justify-between gap-2 sm:gap-3" style={{ transform: "translateZ(20px)" }}>
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-            <Link href={`/${locale}/profile/${post.author_id}`} className="hover:opacity-80 transition-opacity">
+          <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
+            <Link href={`/${locale}/profile/${post.author_id}`} className="hover:opacity-80 transition-opacity shrink-0 mt-0.5">
               <Avatar
                 src={post.profiles?.avatar_url}
                 name={post.profiles?.full_name ?? post.profiles?.email}
-                size={40}
+                size={36}
               />
             </Link>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <Link href={`/${locale}/profile/${post.author_id}`} className="truncate font-medium text-sm leading-tight transition-colors hover:text-indigo-400">
+                <Link href={`/${locale}/profile/${post.author_id}`} className="font-bold text-sm leading-tight transition-colors hover:text-indigo-400 break-words max-w-full">
                   {post.profiles?.full_name || post.profiles?.email?.split("@")[0] || (locale === "ar" ? "مجهول" : "Anonymous")}
                 </Link>
                 {/* Badge Display */}
                 {(() => {
                   const badge = getBadge(post.profiles?.is_pro ? 30 : 2, locale);
                   return (
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${badge.bg} ${badge.color}`}>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${badge.bg} ${badge.color}`}>
                       <span>{badge.icon}</span>
                       <span>{badge.label}</span>
                     </span>
@@ -337,42 +337,42 @@ export function PostCard({
                 })()}
 
                 {post.profiles?.is_pro && (
-                  <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1.5 py-0.5 text-[9px] font-bold tracking-wider shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                  <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1.5 py-0.5 text-[9px] font-bold tracking-wider shadow-[0_0_10px_rgba(251,191,36,0.5)] whitespace-nowrap">
                     {t.monetization.proBadge}
                   </span>
                 )}
               </div>
-              <p className="text-muted text-xs">{timeAgo(post.created_at)}</p>
+              <p className="text-muted text-xs mt-0.5">{timeAgo(post.created_at)}</p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2" style={{ transform: "translateZ(25px)" }}>
+          <div className="flex shrink-0 items-center gap-0 sm:gap-2" style={{ transform: "translateZ(25px)" }}>
           {/* Share/Zen Actions */}
-          <div className="flex items-center gap-0.5 sm:gap-1">
+          <div className="flex items-center gap-0 sm:gap-1">
             <button
                onClick={() => setCreateOpen(true)}
-               className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-indigo-400/5 hover:text-indigo-400 active:scale-95 sm:p-2"
+               className="rounded-xl p-1 text-muted transition-all duration-300 hover:bg-indigo-400/5 hover:text-indigo-400 active:scale-95 sm:p-2"
                title={t.flow.continue}
             >
               <FiGitBranch size={16} />
             </button>
             <button
               onClick={() => setSupportOpen(true)}
-              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-amber-500/5 hover:text-amber-500 active:scale-95 sm:p-2"
+              className="rounded-xl p-1 text-muted transition-all duration-300 hover:bg-amber-500/5 hover:text-amber-500 active:scale-95 sm:p-2"
               title={t.monetization.supportCreator}
             >
               <FiCoffee size={16} />
             </button>
             <button
               onClick={() => setZenOpen(true)}
-              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
+              className="rounded-xl p-1 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
               title={locale === "ar" ? "وضع الزن" : "Zen Mode"}
             >
               <FiSun size={16} className="transition-transform hover:rotate-45" />
             </button>
             <button
               onClick={() => setShowTemplateSelect(true)}
-              className="rounded-xl p-1.5 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
+              className="rounded-xl p-1 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
             >
               <FiDownload size={16} />
             </button>
@@ -381,7 +381,7 @@ export function PostCard({
                 <button
                   ref={menuBtnRef}
                   onClick={openMenu}
-                  className="rounded-full p-1.5 text-muted transition-all hover:bg-white/10 hover:text-[var(--foreground)] sm:p-2"
+                  className="rounded-full p-1 text-muted transition-all hover:bg-white/10 hover:text-[var(--foreground)] sm:p-2"
                   title={t.common.edit}
                 >
                   <FiMoreHorizontal size={16} />
