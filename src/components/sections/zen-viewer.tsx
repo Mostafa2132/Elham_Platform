@@ -24,6 +24,11 @@ export function ZenViewer({
 
   useEffect(() => {
     setMounted(true);
+    // منع التمرير في الخلفية أثناء فتح الـ Modal
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
   if (!mounted) return null;
@@ -34,7 +39,7 @@ export function ZenViewer({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className={`fixed top-0 left-0 w-screen h-screen z-[9999] flex items-center justify-center p-6 md:p-12 overflow-hidden ${themeClass} bg-[var(--bg)]`}
+      className={`fixed top-0 left-0 w-screen h-screen z-[9999] flex items-center justify-center p-6 md:p-12 overflow-hidden bg-[#0B0F19] text-white`}
     >
       {/* Dynamic Atmosphere Particles (Optimized) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">

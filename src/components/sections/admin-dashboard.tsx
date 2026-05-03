@@ -460,12 +460,12 @@ export function AdminDashboard() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.04 }}
-                        className={`glass-card rounded-2xl p-5 border border-white/5 flex items-center justify-between group hover:border-amber-500/30 transition-all ${
+                        className={`glass-card rounded-2xl p-4 sm:p-5 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 group hover:border-amber-500/30 transition-all ${
                           index === 0 ? "ring-2 ring-amber-500/20 bg-amber-500/5 shadow-[0_0_40px_rgba(245,158,11,0.15)]" : ""
                         }`}
                       >
-                        <div className="flex items-center gap-5 min-w-0">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl ${
+                        <div className="flex items-center gap-3 sm:gap-5 min-w-0 w-full sm:w-auto">
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl flex items-center justify-center font-black text-lg sm:text-xl ${
                             index === 0 ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.6)]" :
                             index === 1 ? "bg-slate-300 text-black shadow-[0_0_20px_rgba(203,213,225,0.4)]" :
                             index === 2 ? "bg-amber-700 text-white shadow-[0_0_20px_rgba(180,83,9,0.4)]" :
@@ -473,24 +473,24 @@ export function AdminDashboard() {
                           }`}>
                             {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
                           </div>
-                          <Avatar src={u.avatar_url} name={u.full_name || u.email} size={56} />
+                          <Avatar src={u.avatar_url} name={u.full_name || u.email} size={48} />
                           <div className="min-w-0">
-                            <p className="font-black text-base truncate flex items-center gap-2">
+                            <p className="font-black text-sm sm:text-base truncate flex items-center gap-2">
                               {u.full_name || "Anonymous"}
-                              {u.is_pro && <span className="text-[10px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-md font-black uppercase tracking-widest">PRO</span>}
+                              {u.is_pro && <span className="text-[9px] sm:text-[10px] bg-amber-500/20 text-amber-500 px-1.5 sm:px-2 py-0.5 rounded-md font-black uppercase tracking-widest">PRO</span>}
                             </p>
-                            <p className="text-muted text-sm truncate opacity-60">@{u.username || u.email.split('@')[0]}</p>
+                            <p className="text-muted text-xs sm:text-sm truncate opacity-60">@{u.username || u.email.split('@')[0]}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-8 shrink-0 pr-4">
-                          <div className="text-center min-w-[80px]">
-                            <p className="text-2xl font-black brand-gradient-text leading-none">{u.posts_count}</p>
-                            <p className="text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.postsCount}</p>
+                        <div className="flex items-center justify-around sm:justify-end w-full sm:w-auto gap-4 sm:gap-8 shrink-0 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/10">
+                          <div className="text-center min-w-[70px] sm:min-w-[80px]">
+                            <p className="text-xl sm:text-2xl font-black brand-gradient-text leading-none">{u.posts_count}</p>
+                            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.postsCount}</p>
                           </div>
-                          <div className="text-center min-w-[80px] border-l border-white/10 pl-8">
-                            <p className="text-2xl font-black text-cyan-400 leading-none">{u.likes_count}</p>
-                            <p className="text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.interactions}</p>
+                          <div className="text-center min-w-[70px] sm:min-w-[80px] border-l border-white/10 pl-4 sm:pl-8">
+                            <p className="text-xl sm:text-2xl font-black text-cyan-400 leading-none">{u.likes_count}</p>
+                            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.interactions}</p>
                           </div>
                         </div>
                       </motion.div>
