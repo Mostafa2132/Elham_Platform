@@ -69,7 +69,9 @@ export function PostCard({
   const [flowOpen, setFlowOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const reactionBtnRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [reactionPos, setReactionPos] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -115,6 +117,14 @@ export function PostCard({
 
   const handleMouseEnterReactions = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // Calculate position for the portal-based popup
+    if (reactionBtnRef.current) {
+      const rect = reactionBtnRef.current.getBoundingClientRect();
+      setReactionPos({
+        top: rect.top - 8, // will be placed above via transform
+        left: rect.left,
+      });
+    }
     setShowReactions(true);
   };
 
@@ -486,42 +496,70 @@ export function PostCard({
         <div className="mt-5 flex items-center gap-3">
           {/* Reaction Picker Trigger Wrapper */}
           <div 
+            ref={reactionBtnRef}
             className="relative"
             onMouseEnter={handleMouseEnterReactions}
             onMouseLeave={handleMouseLeaveReactions}
           >
-            <AnimatePresence>
-              {showReactions && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: -40, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute bottom-full start-0 mb-1 p-2 glass-card rounded-full flex gap-2 shadow-2xl z-[110] border border-white/10 backdrop-blur-3xl"
-                  style={{ pointerEvents: "auto" }}
-                >
-                  {REACTIONS.map((r) => (
-                    <motion.button
-                      key={r.id}
-                      whileHover={{ scale: 1.3, y: -5 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => {
-                        setSelectedReaction(r.id);
-                        onLike(post);
-                        triggerReactionEffect(r.id, e.currentTarget.getBoundingClientRect());
-                        setShowReactions(false);
-                      }}
-                      className={`p-2 rounded-full transition-all duration-200 ${r.bg} ${r.color} hover:bg-white/10 hover:shadow-lg`}
-                      title={r.label}
-                    >
-                      <r.icon size={20} className={r.fill ? "fill-current" : ""} />
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Reaction popup rendered as portal at body level to escape 3D stacking context */}
+            {mounted && showReactions && createPortal(
+              <div
+                onMouseEnter={handleMouseEnterReactions}
+                onMouseLeave={handleMouseLeaveReactions}
+                style={{
+                  position: "fixed",
+                  top: reactionPos.top,
+                  left: reactionPos.left,
+                  transform: "translateY(-100%)",
+                  zIndex: 9999,
+                  pointerEvents: "auto",
+                }}
+              >
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    className="p-2 rounded-full flex gap-2 shadow-2xl border border-white/10"
+                    style={{
+                      background: "rgba(17, 22, 44, 0.96)",
+                      backdropFilter: "blur(20px)",
+                      WebkitBackdropFilter: "blur(20px)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    {REACTIONS.map((r) => (
+                      <motion.button
+                        key={r.id}
+                        whileHover={{ scale: 1.3, y: -5 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          setSelectedReaction(r.id);
+                          onLike(post);
+                          triggerReactionEffect(r.id, e.currentTarget.getBoundingClientRect());
+                          setShowReactions(false);
+                        }}
+                        className={`p-2 rounded-full transition-all duration-200 ${r.bg} ${r.color} hover:shadow-lg`}
+                        title={r.label}
+                      >
+                        <r.icon size={20} className={r.fill ? "fill-current" : ""} />
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>,
+              document.body
+            )}
 
             <motion.button
-              onMouseEnter={() => setShowReactions(true)}
+              onMouseEnter={() => {
+                if (reactionBtnRef.current) {
+                  const rect = reactionBtnRef.current.getBoundingClientRect();
+                  setReactionPos({ top: rect.top - 8, left: rect.left });
+                }
+                setShowReactions(true);
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               onClick={(e) => {
