@@ -85,7 +85,7 @@ export function RitualBanner({ locale }: { locale: Locale }) {
              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white text-[10px] font-black text-white hover:text-indigo-600 uppercase tracking-widest transition-all shadow-lg"
            >
              <FiPlus size={12} />
-             {locale === "ar" ? "شارك الآن" : "Participate Now"}
+             {t.ritual.participate}
            </button>
         </div>
       </div>

@@ -183,7 +183,7 @@ export function Sidebar({ locale }: { locale: string }) {
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"
-                  className="absolute inset-y-2 right-2 w-1.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.8)]"
+                  className={`absolute inset-y-2 w-1.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.8)] ${isAr ? "left-2" : "right-2"}`}
                 />
               )}
             </Link>

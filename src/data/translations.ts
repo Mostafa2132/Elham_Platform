@@ -98,6 +98,15 @@ export const translations = {
       postsCount: "Posts",
       interactions: "Interactions",
       rank: "Rank",
+      reports: "Reports",
+      totalReports: "Total Reports",
+      markResolved: "Mark Resolved",
+      noReports: "No reports found",
+      reportedBy: "Reported by",
+      bug: "Bug",
+      user: "User",
+      post: "Post",
+      other: "Other"
     },
     profileView: {
       editProfile: "Edit Profile",
@@ -149,7 +158,8 @@ export const translations = {
     ritual: {
       title: "Daily Inspiration Ritual",
       contribute: "Contribute Wisdom",
-      activeNow: "Active Globally"
+      activeNow: "Active Globally",
+      participate: "Participate Now"
     },
     seal: {
       request: "Request Authenticity Seal",
@@ -168,6 +178,29 @@ export const translations = {
     },
     auth: {
       pleaseLogin: "Please login to continue",
+    },
+    search: {
+      title: "Unified Search",
+      placeholder: "Search people, wisdom, or ideas...",
+      noResults: "No results found for this search",
+      startTyping: "Start typing to explore the world of Elham",
+      people: "People",
+      posts: "Posts & Wisdom"
+    },
+    chat: {
+      title: "Your Messages",
+      selectUser: "Select a person from the list to start a conversation.",
+      search: "Search Users...",
+      online: "Online",
+      typeMessage: "Type a message...",
+      editing: "Editing message...",
+      rename: "Rename Contact",
+      newName: "New Name",
+      changeBg: "Change Chat Background",
+      removeBg: "Remove Background",
+      deleteConfirm: "Are you sure you want to permanently delete this message?",
+      edited: "edited",
+      uploadImg: "Upload Image",
     }
   },
   ar: {
@@ -265,6 +298,15 @@ export const translations = {
       postsCount: "المنشورات",
       interactions: "التفاعلات",
       rank: "المركز",
+      reports: "البلاغات",
+      totalReports: "إجمالي البلاغات",
+      markResolved: "تحديد كـ محلولة",
+      noReports: "لا توجد بلاغات حالياً",
+      reportedBy: "أُبلغ بواسطة",
+      bug: "مشكلة تقنية",
+      user: "مستخدم",
+      post: "منشور",
+      other: "آخر"
     },
     profileView: {
       editProfile: "تعديل الحساب",
@@ -316,7 +358,8 @@ export const translations = {
     ritual: {
       title: "طقوس الإلهام اليومية",
       contribute: "شارك بحكمتك",
-      activeNow: "نشط عالمياً"
+      activeNow: "نشط عالمياً",
+      participate: "شارك الآن"
     },
     seal: {
       request: "طلب وسام الأصالة",
@@ -335,6 +378,29 @@ export const translations = {
     },
     auth: {
       pleaseLogin: "يرجى تسجيل الدخول للمتابعة",
+    },
+    search: {
+      title: "البحث الموحد",
+      placeholder: "ابحث عن أشخاص، حكم، أو أفكار...",
+      noResults: "لا توجد نتائج لهذا البحث",
+      startTyping: "ابدأ الكتابة لاستكشاف عالم إلهام",
+      people: "الأشخاص",
+      posts: "المنشورات والحكمة"
+    },
+    chat: {
+      title: "رسائلك",
+      selectUser: "اختر شخصاً من القائمة لبدء المحادثة معه.",
+      search: "بحث عن مستخدمين...",
+      online: "متصل الآن",
+      typeMessage: "اكتب رسالة...",
+      editing: "تعديل الرسالة...",
+      rename: "إعادة تسمية جهة الاتصال",
+      newName: "الاسم الجديد",
+      changeBg: "تغيير خلفية المحادثة",
+      removeBg: "إزالة الخلفية",
+      deleteConfirm: "هل أنت متأكد أنك تريد حذف هذه الرسالة نهائياً؟",
+      edited: "تم تعديلها",
+      uploadImg: "اختر صورة",
     }
   },
 } as const;

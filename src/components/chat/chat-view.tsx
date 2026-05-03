@@ -279,13 +279,13 @@ export function ChatView({ locale }: { locale: Locale }) {
       {/* Sidebar - Conversations */}
       <div className={`w-full md:w-80 border-r border-white/5 flex flex-col ${selectedUser ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b border-white/5">
-          <h2 className="text-xl font-bold mb-4">{locale === "ar" ? "المحادثات" : "Messages"}</h2>
+          <h2 className="text-xl font-bold mb-4">{t.chat.messages}</h2>
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input 
               type="text" 
-              placeholder={locale === "ar" ? "بحث عن أشخاص..." : "Search people..."} 
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 ring-indigo-500/20"
+              placeholder={t.chat.search}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-xs focus:outline-none focus:ring-1 ring-indigo-500/50"
             />
           </div>
         </div>
@@ -338,7 +338,7 @@ export function ChatView({ locale }: { locale: Locale }) {
                   <p className="font-bold text-sm">
                     {chatSettings.nickname || selectedUser.full_name || selectedUser.email.split("@")[0]}
                   </p>
-                  <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Online</p>
+                  <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">{t.chat.online}</p>
                 </div>
               </div>
               <div className="relative">
@@ -360,7 +360,7 @@ export function ChatView({ locale }: { locale: Locale }) {
                       setBgFile(null);
                       setShowSettingsMenu(false);
                     }} className="w-full px-4 py-2 text-left hover:bg-white/5 text-sm flex items-center gap-2">
-                      <FiImage size={14} /> {locale === "ar" ? "تغيير الخلفية" : "Change Background"}
+                      <FiImage size={14} /> {t.chat.changeBg}
                     </button>
                   </div>
                 )}
@@ -382,7 +382,7 @@ export function ChatView({ locale }: { locale: Locale }) {
                   }`}>
                     <p className="leading-relaxed">{m.content}</p>
                     <p className={`text-[9px] mt-1 opacity-50 flex items-center gap-1 ${m.sender_id === user.id ? "justify-end" : "justify-start"}`}>
-                      {m.is_edited && <span>(edited)</span>}
+                      {m.is_edited && <span>({t.chat.edited})</span>}
                       {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     
@@ -433,7 +433,7 @@ export function ChatView({ locale }: { locale: Locale }) {
             <form onSubmit={sendMessage} className="p-4 bg-white/5 backdrop-blur-xl border-t border-white/5 relative z-10">
               {editingMessageId && (
                 <div className="absolute bottom-full left-0 w-full bg-indigo-500/20 text-indigo-200 text-xs px-4 py-2 border-t border-indigo-500/30 flex justify-between items-center backdrop-blur-md">
-                  <span className="flex items-center gap-2"><FiEdit2 size={12} /> {locale === "ar" ? "تعديل الرسالة..." : "Editing message..."}</span>
+                  <span className="flex items-center gap-2"><FiEdit2 size={12} /> {t.chat.editing}</span>
                   <button type="button" onClick={() => { setEditingMessageId(null); setNewMessage(""); }} className="hover:text-white"><FiX size={14} /></button>
                 </div>
               )}
@@ -442,7 +442,7 @@ export function ChatView({ locale }: { locale: Locale }) {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={locale === "ar" ? "اكتب رسالة..." : "Type a message..."}
+                  placeholder={t.chat.typeMessage}
                   className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-3 px-5 text-sm focus:outline-none focus:ring-2 ring-indigo-500/30 transition-all"
                 />
                 <button 
@@ -460,14 +460,14 @@ export function ChatView({ locale }: { locale: Locale }) {
             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
               <FiMessageCircle size={40} className="text-muted" />
             </div>
-            <h3 className="text-xl font-bold mb-2">{locale === "ar" ? "رسائلك" : "Your Messages"}</h3>
-            <p className="max-w-xs text-sm">{locale === "ar" ? "اختر شخصاً من القائمة لبدء المحادثة معه." : "Select a person from the list to start a conversation."}</p>
+            <h3 className="text-xl font-bold mb-2">{t.chat.title}</h3>
+            <p className="max-w-xs text-sm">{t.chat.selectUser}</p>
           </div>
         )}
       </div>
 
       {/* Change Background Modal */}
-      <Modal open={showBgModal} onClose={() => setShowBgModal(false)} title={locale === "ar" ? "تغيير خلفية المحادثة" : "Change Chat Background"} maxWidth="400px">
+      <Modal open={showBgModal} onClose={() => setShowBgModal(false)} title={t.chat.changeBg} maxWidth="400px">
         <div className="space-y-4">
           <label className="relative block h-40 rounded-xl overflow-hidden cursor-pointer bg-black/40 border border-white/10 hover:border-indigo-500/50 transition-colors group">
             {(bgPreview || chatSettings.background_url) && (
@@ -475,64 +475,64 @@ export function ChatView({ locale }: { locale: Locale }) {
             )}
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
               <FiCamera size={24} className="text-white" />
-              <span className="ml-2 text-sm font-bold text-white">{locale === "ar" ? "اختر صورة من جهازك" : "Upload Image"}</span>
+              <span className="ml-2 text-sm font-bold text-white">{t.chat.uploadImg}</span>
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
           </label>
           
           <div className="flex justify-between items-center pt-2">
             <button onClick={() => { updateSetting("background_url", null); setShowBgModal(false); }} className="text-rose-400 text-xs font-bold hover:text-rose-300 transition-colors">
-              {locale === "ar" ? "إزالة الخلفية" : "Remove Background"}
+              {t.chat.removeBg}
             </button>
             <button onClick={handleBgUpload} disabled={!bgFile || isUploading} className="btn-primary disabled:opacity-50 px-6 py-2.5 rounded-xl font-bold text-sm">
-              {isUploading ? "..." : (locale === "ar" ? "حفظ التغييرات" : "Save Changes")}
+              {isUploading ? "..." : t.common.save}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Rename Modal */}
-      <Modal open={showRenameModal} onClose={() => setShowRenameModal(false)} title={locale === "ar" ? "إعادة التسمية" : "Rename Contact"} maxWidth="400px">
+      <Modal open={showRenameModal} onClose={() => setShowRenameModal(false)} title={t.chat.rename} maxWidth="400px">
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-muted mb-2 block">
-              {locale === "ar" ? "الاسم الجديد" : "New Name"}
+              {t.chat.newName}
             </label>
             <input 
               type="text" 
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
-              placeholder={locale === "ar" ? "أدخل الاسم..." : "Enter name..."}
+              placeholder={t.common.save + "..."}
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 ring-indigo-500/30 transition-all"
             />
           </div>
           
           <div className="flex justify-end items-center pt-2 gap-3">
             <button onClick={() => setShowRenameModal(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">
-              {locale === "ar" ? "إلغاء" : "Cancel"}
+              {t.common.cancel}
             </button>
             <button onClick={() => {
               updateSetting("nickname", renameInput.trim() || null);
               setShowRenameModal(false);
             }} className="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm">
-              {locale === "ar" ? "حفظ" : "Save"}
+              {t.common.save}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal open={!!messageToDelete} onClose={() => setMessageToDelete(null)} title={locale === "ar" ? "حذف الرسالة" : "Delete Message"} maxWidth="320px">
+      <Modal open={!!messageToDelete} onClose={() => setMessageToDelete(null)} title={t.common.delete} maxWidth="320px">
         <div className="space-y-4">
           <p className="text-sm text-center text-muted">
-            {locale === "ar" ? "هل أنت متأكد أنك تريد حذف هذه الرسالة نهائياً؟" : "Are you sure you want to permanently delete this message?"}
+            {t.chat.deleteConfirm}
           </p>
           <div className="flex justify-center gap-3 pt-2">
             <button onClick={() => setMessageToDelete(null)} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-white/5 hover:bg-white/10 transition-colors">
-              {locale === "ar" ? "إلغاء" : "Cancel"}
+              {t.common.cancel}
             </button>
             <button onClick={handleDeleteMessage} disabled={isDeleting} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white transition-colors shadow-lg shadow-rose-500/20">
-              {isDeleting ? "..." : (locale === "ar" ? "حذف" : "Delete")}
+              {isDeleting ? "..." : t.common.delete}
             </button>
           </div>
         </div>

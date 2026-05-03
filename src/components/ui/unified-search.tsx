@@ -54,18 +54,17 @@ export function UnifiedSearch({ locale, open, onClose }: { locale: Locale; open:
   }, [query, supabase]);
 
   return (
-    <Modal open={open} onClose={onClose} title={locale === "ar" ? "البحث الموحد" : "Unified Search"}>
-      <div className="space-y-6 min-h-[400px]">
-        {/* Search Input */}
+    <Modal open={open} onClose={onClose} title={t.search.title}>
+      <div className="space-y-6">
         <div className="relative">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" size={20} />
-          <input
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input 
             autoFocus
-            type="text"
+            type="text" 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={locale === "ar" ? "ابحث عن أشخاص، حكم، أو أفكار..." : "Search people, wisdom, or ideas..."}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:ring-2 ring-indigo-500/30 transition-all"
+            placeholder={t.search.placeholder}
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-sm focus:outline-none focus:ring-2 ring-indigo-500/30 transition-all"
           />
         </div>
 
@@ -80,14 +79,14 @@ export function UnifiedSearch({ locale, open, onClose }: { locale: Locale; open:
 
           {!loading && query.length >= 2 && results.users.length === 0 && results.posts.length === 0 && (
             <div className="text-center py-20 opacity-40">
-              <p>{locale === "ar" ? "لا توجد نتائج لهذا البحث" : "No results found for this search"}</p>
+              <p>{t.search.noResults}</p>
             </div>
           )}
 
           {!loading && query.length < 2 && (
             <div className="text-center py-20 opacity-20">
               <FiTrendingUp size={40} className="mx-auto mb-4" />
-              <p className="text-sm italic">{locale === "ar" ? "ابدأ الكتابة لاستكشاف عالم إلهام" : "Start typing to explore the world of Elham"}</p>
+              <p className="text-sm italic">{t.search.startTyping}</p>
             </div>
           )}
 
@@ -96,7 +95,7 @@ export function UnifiedSearch({ locale, open, onClose }: { locale: Locale; open:
             <div className="space-y-3">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-2 flex items-center gap-2">
                 <FiUser size={12} />
-                {locale === "ar" ? "الأشخاص" : "People"}
+                {t.search.people}
               </h4>
               <div className="grid gap-2">
                 {results.users.map((u) => (
@@ -122,7 +121,7 @@ export function UnifiedSearch({ locale, open, onClose }: { locale: Locale; open:
             <div className="space-y-3">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-2 flex items-center gap-2">
                 <FiFileText size={12} />
-                {locale === "ar" ? "المنشورات والحكمة" : "Posts & Wisdom"}
+                {t.search.posts}
               </h4>
               <div className="grid gap-3">
                 {results.posts.map((p) => (

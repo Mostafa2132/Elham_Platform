@@ -22,16 +22,16 @@ import { POST_THEMES } from "@/lib/constants";
 
 type AdminTab = "analytics" | "leaderboard" | "users" | "posts" | "ads" | "announcements" | "master" | "requests" | "reports";
 
-const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
-  { id: "analytics", label: "Analytics", icon: <FiBarChart2 /> },
-  { id: "leaderboard", label: "Leaderboard", icon: <FiStar /> },
-  { id: "users", label: "Users", icon: <FiUsers /> },
-  { id: "posts", label: "Posts", icon: <FiFileText /> },
-  { id: "ads", label: "Ads", icon: <FiSpeaker /> },
-  { id: "announcements", label: "Announcements", icon: <FiBell /> },
-  { id: "requests", label: "Requests", icon: <FiShield /> },
-  { id: "reports", label: "Reports", icon: <FiAlertTriangle /> },
-  { id: "master", label: "Master", icon: <FiZap /> },
+const getTabs = (t: any) => [
+  { id: "analytics" as AdminTab, label: t.admin.analytics, icon: <FiBarChart2 /> },
+  { id: "leaderboard" as AdminTab, label: t.admin.leaderboard, icon: <FiStar /> },
+  { id: "users" as AdminTab, label: t.admin.users, icon: <FiUsers /> },
+  { id: "posts" as AdminTab, label: t.admin.posts, icon: <FiFileText /> },
+  { id: "ads" as AdminTab, label: t.admin.ads, icon: <FiSpeaker /> },
+  { id: "announcements" as AdminTab, label: t.admin.announcements, icon: <FiBell /> },
+  { id: "requests" as AdminTab, label: t.masterAdmin.authenticityQueue, icon: <FiShield /> },
+  { id: "reports" as AdminTab, label: t.admin.reports, icon: <FiAlertTriangle /> },
+  { id: "master" as AdminTab, label: t.masterAdmin.title, icon: <FiZap /> },
 ];
 
 export function AdminDashboard() {
@@ -42,6 +42,7 @@ export function AdminDashboard() {
   const { profile } = useAuthStore();
 
   const supabase = getSupabase();
+  const TABS = getTabs(t);
   const [tab, setTab] = useState<AdminTab>("analytics");
   const [users, setUsers] = useState<Profile[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -288,7 +289,7 @@ export function AdminDashboard() {
   };
 
   const generateRitualAI = () => {
-    const seeds = [
+    const enSeeds = [
       "The universe doesn't speak in whispers; it speaks in the courage of the souls who listen.",
       "Every breath is a second chance to rewrite the story of your light.",
       "Your journey isn't a destination, it's the masterpiece you create while walking.",
@@ -300,7 +301,20 @@ export function AdminDashboard() {
       "May your steps today be guided by the echoes of your future self.",
       "Transcend the ordinary; the cosmic realm belongs to the dreamers."
     ];
+    const arSeeds = [
+      "الكون لا يتحدث همساً؛ بل يتحدث بشجاعة الأرواح التي تنصت.",
+      "كل نفس هو فرصة ثانية لإعادة كتابة قصة نورك.",
+      "رحلتك ليست وجهة، بل هي التحفة الفنية التي تبدعها أثناء السير.",
+      "في صمت الروح، تولد الإجابات الأكثر عمقاً.",
+      "اجعل حدسك هو البوصلة التي تقودك عبر غبار النجوم.",
+      "النمو يبدأ في اللحظة التي تقرر فيها أن نورك أسطع من ظلالك.",
+      "العالم ينتظر النسخة منك التي لا يمكن لأحد غيرك أن يكونها.",
+      "اللطف هو العملة الحقيقية للروح النخبوية.",
+      "لتكن خطواتك اليوم مسترشدة بصدى ذاتك المستقبلية.",
+      "تجاوز المألوف؛ فالمجال الكوني ملك للحالمين."
+    ];
     
+    const seeds = isAr ? arSeeds : enSeeds;
     const random = seeds[Math.floor(Math.random() * seeds.length)];
     
     // Simulate typing effect
@@ -372,34 +386,36 @@ export function AdminDashboard() {
                     {/* Line Chart Section */}
                     <div className="md:col-span-2 glass-card rounded-2xl p-6 space-y-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm tracking-tight">{locale === "ar" ? "اتجاهات النمو" : "Growth Trends"}</h3>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">+14% vs last month</span>
+                        <h3 className="font-bold text-sm tracking-tight">{isAr ? "اتجاهات النمو" : "Growth Trends"}</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                          {isAr ? "+14% مقارنة بالشهر الماضي" : "+14% vs last month"}
+                        </span>
                       </div>
                       <div className="h-48 relative mt-4">
                         <LineChart data={chartData.length > 0 ? chartData : [0, 0, 0, 0, 0, 0, 0, 0]} color="#6366f1" />
                       </div>
                       <div className="flex justify-between text-muted text-[10px] font-bold uppercase tracking-tighter px-2">
-                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Today"].map(d => <span key={d}>{d}</span>)}
+                        {(isAr ? ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد", "اليوم"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Today"]).map(d => <span key={d}>{d}</span>)}
                       </div>
                     </div>
 
                     {/* Progress Rings Section */}
                     <div className="glass-card rounded-2xl p-6 space-y-6">
-                      <h3 className="font-bold text-sm tracking-tight">{locale === "ar" ? "تحقيق الأهداف" : "Target Achievement"}</h3>
+                      <h3 className="font-bold text-sm tracking-tight">{isAr ? "تحقيق الأهداف" : "Target Achievement"}</h3>
                       <div className="flex flex-col items-center justify-center gap-6 py-4">
                         {(() => {
                           const userGoal = 100;
                           const progress = Math.min(100, Math.round((stats.users / userGoal) * 100));
-                          return <ProgressRing value={progress} label={locale === "ar" ? "هدف المشتركين (100)" : "User Target (100)"} color="#f59e0b" />;
+                          return <ProgressRing value={progress} label={isAr ? "هدف المشتركين (100)" : "User Target (100)"} color="#f59e0b" />;
                         })()}
                         <div className="grid grid-cols-2 gap-4 w-full">
                           <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                             <p className="text-lg font-black">{users.filter(u => u.role === "admin").length}</p>
-                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">Admins</p>
+                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{isAr ? "مدراء" : "Admins"}</p>
                           </div>
                           <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                             <p className="text-lg font-black">{profile?.is_pro ? 1 : 0}</p>
-                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">Your Pro Status</p>
+                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{isAr ? "حالة البرو" : "Your Pro Status"}</p>
                           </div>
                         </div>
                       </div>
@@ -563,7 +579,7 @@ export function AdminDashboard() {
               {tab === "posts" && (
                 <div className="space-y-4">
                   <p className="text-muted text-sm mb-2 font-bold tracking-wide uppercase">
-                    {posts.length} {locale === "ar" ? "أحدث المنشورات" : "recent posts"}
+                    {locale === "ar" ? `أحدث ${posts.length} منشورات` : `${posts.length} recent posts`}
                   </p>
                   <div className="grid gap-3">
                     {posts.map((p) => {
@@ -588,16 +604,16 @@ export function AdminDashboard() {
                           </div>
 
                           {/* Date, Time & Actions */}
-                          <div className="flex items-center justify-between md:flex-col md:justify-center gap-3 shrink-0 md:w-32 border-t md:border-t-0 md:border-l border-white/5 pt-3 md:pt-0 md:pl-4 md:ms-2">
+                          <div className="flex items-center justify-between md:flex-col md:justify-center gap-3 shrink-0 md:w-32 border-t md:border-t-0 border-white/5 md:border-s md:ps-4 md:ms-2 pt-3 md:pt-0">
                             <div className="text-center">
                               <p className="text-xs font-bold text-[var(--foreground)]">
-                                {postDate.toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", {
+                                {postDate.toLocaleTimeString(isAr ? "ar-EG-u-nu-latn" : "en-US", {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })}
                               </p>
                               <p className="text-[10px] uppercase tracking-widest text-muted mt-0.5">
-                                {postDate.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
+                                {postDate.toLocaleDateString(isAr ? "ar-EG-u-nu-latn" : "en-US", {
                                   month: "short",
                                   day: "numeric",
                                   year: "numeric"
@@ -742,7 +758,7 @@ export function AdminDashboard() {
                   <div className="flex items-center justify-between px-2">
                     <h3 className="text-xl font-bold flex items-center gap-2">
                       <FiAlertTriangle className="text-amber-500" />
-                      {locale === "ar" ? "البلاغات والمشاكل" : "Bug Reports & Issues"}
+                      {t.admin.reports}
                     </h3>
                   </div>
                   
@@ -752,7 +768,7 @@ export function AdminDashboard() {
                         <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
                           <FiCheckCircle size={30} className="text-muted opacity-20" />
                         </div>
-                        <p className="text-muted italic">{locale === "ar" ? "لا توجد بلاغات" : "No reports found"}</p>
+                        <p className="text-muted italic">{t.admin.noReports}</p>
                       </div>
                     ) : (
                       reports.map(r => (
@@ -760,15 +776,17 @@ export function AdminDashboard() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-500'}`}>
-                                {r.status.toUpperCase()}
+                                {r.status === 'resolved' ? t.admin.active.toUpperCase() : (isAr ? "قيد الانتظار" : "PENDING")}
                               </span>
-                              <span className="text-xs text-muted uppercase font-bold tracking-wider">{r.report_type}</span>
+                              <span className="text-xs text-muted uppercase font-bold tracking-wider">
+                                {t.admin[r.report_type as keyof typeof t.admin] || r.report_type}
+                              </span>
                               <span className="text-xs text-muted">- {new Date(r.created_at).toLocaleDateString(locale)}</span>
                             </div>
                             <p className="font-medium text-sm mb-2 text-white/90">{r.description}</p>
                             <div className="flex items-center gap-2">
                               <Avatar src={r.profiles?.avatar_url} size={20} />
-                              <p className="text-xs text-muted">{r.profiles?.full_name || r.profiles?.email}</p>
+                              <p className="text-xs text-muted">{t.admin.reportedBy}: {r.profiles?.full_name || r.profiles?.email}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
@@ -784,17 +802,17 @@ export function AdminDashboard() {
                                     content: locale === "ar" ? "تم حل المشكلة التي أبلغت عنها. شكراً لك! 🎉" : "The problem you reported has been resolved. Thank you! 🎉"
                                   });
 
-                                  toast.success(locale === "ar" ? "تم تحديد البلاغ كـ محلول!" : "Report marked as resolved!");
+                                  toast.success(t.admin.markResolved);
                                   load();
                                 }}
                                 className="btn-primary px-4 py-2 rounded-xl text-xs font-bold"
                               >
-                                {locale === "ar" ? "تحديد كـ محلولة" : "Mark Resolved"}
+                                {t.admin.markResolved}
                               </button>
                             )}
                             <button
                               onClick={async () => {
-                                if(confirm(locale === "ar" ? "هل أنت متأكد من حذف البلاغ؟" : "Delete report?")) {
+                                if(confirm(isAr ? "هل أنت متأكد من حذف البلاغ؟" : "Delete report?")) {
                                   await supabase.from("reports").delete().eq("id", r.id);
                                   load();
                                 }
