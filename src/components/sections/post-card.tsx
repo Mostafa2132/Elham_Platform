@@ -135,7 +135,7 @@ export function PostCard({
   };
 
   // Parsing theme from content: "[T:midnight] Hello"
-  const themeMatch = post.content.match(/\[T:(\w+)\]/);
+  const themeMatch = post.content.match(/\[T:([\w-]+)\]/);
   const themeId = themeMatch ? themeMatch[1] : "default";
   
   // Chain logic: Detect [P:id]
@@ -144,7 +144,7 @@ export function PostCard({
   
   // Clean content from all metadata tags
   const finalContent = post.content
-    .replace(/\[T:\w+\]/g, "")
+    .replace(/\[T:[\w-]+\]/g, "")
     .replace(/\[P:[\w-]+\]/g, "")
     .trim();
   const displayContent = finalContent; // Kept for backwards compatibility in handleDownload
@@ -260,7 +260,11 @@ export function PostCard({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className={`glass-card relative group/card rounded-3xl p-4 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-6 ${themeConfig.class}`}
+        className={`relative group/card rounded-3xl p-4 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-6 ${
+          themeId === "default" 
+            ? "glass-card" 
+            : `backdrop-blur-xl border border-white/10 shadow-xl ${themeConfig.class}`
+        }`}
       >
         {/* ─── Vault Saved Overlay ─── */}
         <AnimatePresence>
@@ -690,9 +694,9 @@ function EditPostModal({
   const supabase = getSupabase();
 
   // Parse existing theme
-  const initialThemeMatch = post.content.match(/\[T:(\w+)\]/);
+  const initialThemeMatch = post.content.match(/\[T:([\w-]+)\]/);
   const initialTheme = initialThemeMatch ? initialThemeMatch[1] : "default";
-  const initialText = post.content.replace(/\[T:\w+\]/g, "").replace(/\[P:[\w-]+\]/g, "").trim();
+  const initialText = post.content.replace(/\[T:[\w-]+\]/g, "").replace(/\[P:[\w-]+\]/g, "").trim();
 
   const [selectedTheme, setSelectedTheme] = useState(initialTheme);
   const themeConfig = POST_THEMES.find(t => t.id === selectedTheme) || POST_THEMES[0];
