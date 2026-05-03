@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiUser, FiSearch, FiMoreVertical, FiArrowLeft, FiMessageCircle, FiEdit2, FiImage, FiX, FiCamera } from "react-icons/fi";
+import { FiSend, FiUser, FiSearch, FiMoreVertical, FiArrowLeft, FiMessageCircle, FiEdit2, FiImage, FiX, FiCamera, FiTrash2 } from "react-icons/fi";
 import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
 import { getSupabase } from "@/lib/supabase";
@@ -39,6 +39,8 @@ export function ChatView({ locale }: { locale: Locale }) {
   const [showBgModal, setShowBgModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameInput, setRenameInput] = useState("");
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [bgPreview, setBgPreview] = useState<string | null>(null);
   const [bgFile, setBgFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -215,6 +217,21 @@ export function ChatView({ locale }: { locale: Locale }) {
     setMessages(prev => prev.map(m => m.id === msgId ? { ...m, reaction } : m));
     await supabase.from("messages").update({ reaction }).eq("id", msgId);
     setActiveReactionMsgId(null);
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!messageToDelete) return;
+    setIsDeleting(true);
+    
+    const { error } = await supabase.from("messages").delete().eq("id", messageToDelete);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setMessages(prev => prev.filter(m => m.id !== messageToDelete));
+    }
+    
+    setIsDeleting(false);
+    setMessageToDelete(null);
   };
 
   // Separate scroll logic for sending messages
@@ -399,6 +416,9 @@ export function ChatView({ locale }: { locale: Locale }) {
                             <button onClick={(e) => { e.stopPropagation(); setEditingMessageId(m.id); setNewMessage(m.content); setActiveReactionMsgId(null); }} className="p-1.5 text-indigo-300 hover:text-white transition-colors" title="Edit">
                               <FiEdit2 size={14} />
                             </button>
+                            <button onClick={(e) => { e.stopPropagation(); setMessageToDelete(m.id); setActiveReactionMsgId(null); }} className="p-1.5 text-rose-400 hover:text-rose-300 transition-colors" title="Delete">
+                              <FiTrash2 size={14} />
+                            </button>
                           </div>
                         )}
                       </motion.div>
@@ -496,6 +516,23 @@ export function ChatView({ locale }: { locale: Locale }) {
               setShowRenameModal(false);
             }} className="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm">
               {locale === "ar" ? "حفظ" : "Save"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={!!messageToDelete} onClose={() => setMessageToDelete(null)} title={locale === "ar" ? "حذف الرسالة" : "Delete Message"} maxWidth="320px">
+        <div className="space-y-4">
+          <p className="text-sm text-center text-muted">
+            {locale === "ar" ? "هل أنت متأكد أنك تريد حذف هذه الرسالة نهائياً؟" : "Are you sure you want to permanently delete this message?"}
+          </p>
+          <div className="flex justify-center gap-3 pt-2">
+            <button onClick={() => setMessageToDelete(null)} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-white/5 hover:bg-white/10 transition-colors">
+              {locale === "ar" ? "إلغاء" : "Cancel"}
+            </button>
+            <button onClick={handleDeleteMessage} disabled={isDeleting} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white transition-colors shadow-lg shadow-rose-500/20">
+              {isDeleting ? "..." : (locale === "ar" ? "حذف" : "Delete")}
             </button>
           </div>
         </div>
