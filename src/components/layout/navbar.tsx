@@ -230,7 +230,7 @@ export function Navbar({ locale }: { locale: Locale }) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="glass mx-3 mt-1 rounded-2xl p-4 space-y-1 md:hidden"
+          className="glass mx-3 mt-1 rounded-2xl p-4 space-y-1 md:hidden !bg-[var(--bg)]/95 !backdrop-blur-2xl"
         >
           <MobileNavLink href={`/${locale}`} onClick={() => setMenuOpen(false)}>
             {t.nav.home}
