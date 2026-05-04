@@ -189,6 +189,7 @@ export const translations = {
     },
     chat: {
       title: "Your Messages",
+      messages: "Messages",
       selectUser: "Select a person from the list to start a conversation.",
       search: "Search Users...",
       online: "Online",
@@ -389,6 +390,7 @@ export const translations = {
     },
     chat: {
       title: "رسائلك",
+      messages: "الرسائل",
       selectUser: "اختر شخصاً من القائمة لبدء المحادثة معه.",
       search: "بحث عن مستخدمين...",
       online: "متصل الآن",
