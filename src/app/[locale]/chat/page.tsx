@@ -1,7 +1,7 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/layout/protected-route";
-import { ChatView } from "@/components/chat/chat-view";
+import ChatView from "@/components/chat/chat-view";
 import { useParams } from "next/navigation";
 import { type Locale } from "@/types";
 

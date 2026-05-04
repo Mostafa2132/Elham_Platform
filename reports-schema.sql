@@ -26,4 +26,3 @@ CREATE POLICY "Admin can view all reports" ON reports FOR SELECT USING (
 -- الأدمن يقدر يعدل حالة البلاغات (يخليها resolved)
 CREATE POLICY "Admin can update reports" ON reports FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
