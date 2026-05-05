@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
 import { useInteractionStore } from "@/store/interaction-store";
@@ -14,6 +14,7 @@ export function useMessageNotification() {
   const { user } = useAuthStore();
   const { incrementUnreadForUser, setUnreadCounts } = useInteractionStore();
   const supabase = getSupabase();
+  const processedMessages = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
@@ -52,10 +53,14 @@ export function useMessageNotification() {
         },
         (payload) => {
           const newMsg = payload.new;
-          // الحصول على الحالة الحالية للمتجر للتأكد من المحادثة النشطة
-          const { activeChatId } = useInteractionStore.getState();
           
-          // زيادة العداد فقط إذا لم تكن المحادثة مع هذا الشخص مفتوحة حالياً
+          // منع التكرار باستخدام معرف الرسالة
+          if (processedMessages.current.has(newMsg.id)) return;
+          processedMessages.current.add(newMsg.id);
+          // تنظيف الذاكرة كل فترة
+          if (processedMessages.current.size > 100) processedMessages.current.clear();
+
+          const { activeChatId } = useInteractionStore.getState();
           if (newMsg.sender_id !== user.id && newMsg.sender_id !== activeChatId) {
             incrementUnreadForUser(newMsg.sender_id);
           }

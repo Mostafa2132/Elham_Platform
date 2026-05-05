@@ -278,10 +278,10 @@ export default function ChatView({ locale }: { locale: string }) {
   const displayName = chatSettings?.nickname || selectedUser?.full_name || selectedUser?.email.split("@")[0];
 
   return (
-    <div className="flex h-[calc(100vh-140px)] glass-card rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 mx-auto max-w-7xl relative">
+    <div className="flex h-[calc(100vh-140px)] glass-card rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 mx-auto max-w-7xl relative w-full max-w-[100vw]">
       
       {/* Sidebar */}
-      <div className={`w-full md:w-80 border-r border-white/5 flex flex-col ${selectedUser ? "hidden md:flex" : "flex"} bg-black/20 z-20`}>
+      <div className={`w-full md:w-80 border-r border-white/5 flex flex-col ${selectedUser ? "hidden md:flex" : "flex"} bg-black/20 z-20 overflow-hidden`}>
         <div className="p-6 border-b border-white/5">
           <h2 className="text-2xl font-black mb-4 tracking-tight">{t.chat.title}</h2>
           <div className="relative group">
