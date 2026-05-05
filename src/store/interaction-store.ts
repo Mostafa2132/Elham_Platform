@@ -4,6 +4,7 @@ type InteractionState = {
   savedPostIds: Set<string>;
   likedPostIds: Set<string>;
   unreadCountsByUser: Record<string, number>;
+  activeChatId: string | null;
   
   // Actions
   setSavedPosts: (ids: string[]) => void;
@@ -18,6 +19,8 @@ type InteractionState = {
 
   incrementUnreadForUser: (userId: string) => void;
   resetUnreadForUser: (userId: string) => void;
+  setUnreadCounts: (counts: Record<string, number>) => void;
+  setActiveChatId: (id: string | null) => void;
   getGlobalUnreadCount: () => number;
   
   isSaved: (id: string) => boolean;
@@ -28,6 +31,7 @@ export const useInteractionStore = create<InteractionState>((set, get) => ({
   savedPostIds: new Set(),
   likedPostIds: new Set(),
   unreadCountsByUser: {},
+  activeChatId: null,
 
   setSavedPosts: (ids) => set({ savedPostIds: new Set(ids) }),
   addSavedPost: (id) => set((state) => {
@@ -75,6 +79,8 @@ export const useInteractionStore = create<InteractionState>((set, get) => ({
       [userId]: 0
     }
   })),
+  setUnreadCounts: (counts) => set({ unreadCountsByUser: counts }),
+  setActiveChatId: (id) => set({ activeChatId: id }),
   getGlobalUnreadCount: () => {
     const counts = get().unreadCountsByUser;
     return Object.values(counts).reduce((acc, val) => acc + val, 0);

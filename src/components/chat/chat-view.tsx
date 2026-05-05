@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
+import { useInteractionStore } from "@/store/interaction-store";
 import { translations } from "@/data/translations";
 import { Avatar } from "@/components/ui/avatar";
 import { type Profile, type Locale } from "@/types";
@@ -37,6 +38,7 @@ const REACTIONS = ["❤️", "👍", "🔥", "😂", "😮", "🙏"];
 
 export default function ChatView({ locale }: { locale: string }) {
   const { user, profile } = useAuthStore();
+  const { unreadCountsByUser, resetUnreadForUser, setActiveChatId } = useInteractionStore();
   const [users, setUsers] = useState<Profile[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -115,6 +117,8 @@ export default function ChatView({ locale }: { locale: string }) {
       }
       
       await supabase.from("messages").update({ is_read: true }).eq("sender_id", selectedUser.id).eq("receiver_id", user.id).eq("is_read", false);
+      resetUnreadForUser(selectedUser.id);
+      setActiveChatId(selectedUser.id);
     };
 
     loadChatData();
@@ -136,7 +140,10 @@ export default function ChatView({ locale }: { locale: string }) {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+      setActiveChatId(null);
+    };
   }, [selectedUser, user, supabase]);
 
   useEffect(() => {
@@ -290,12 +297,27 @@ export default function ChatView({ locale }: { locale: string }) {
           {loading && users.length === 0 ? (
             <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-[var(--brand-a)] border-t-transparent rounded-full animate-spin" /></div>
           ) : filteredUsers.map((u) => (
-            <button key={u.id} onClick={() => setSelectedUser(u)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group ${selectedUser?.id === u.id ? "bg-white/10 shadow-lg" : "hover:bg-white/5"}`}
+            <button key={u.id} onClick={() => { setSelectedUser(u); resetUnreadForUser(u.id); }}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group relative ${selectedUser?.id === u.id ? "bg-white/10 shadow-lg" : "hover:bg-white/5"}`}
             >
-              <Avatar src={u.avatar_url} name={u.full_name || u.email} size={44} />
+              <div className="relative">
+                <Avatar src={u.avatar_url} name={u.full_name || u.email} size={44} />
+                {unreadCountsByUser[u.id] > 0 && (
+                  <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-[#0a0a0a]" />
+                  </div>
+                )}
+              </div>
               <div className="flex-1 text-left min-w-0">
-                <p className={`font-bold truncate text-sm ${selectedUser?.id === u.id ? "text-white" : "text-white/80"}`}>{u.full_name || u.email.split("@")[0]}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className={`font-bold truncate text-sm ${selectedUser?.id === u.id ? "text-white" : "text-white/80"}`}>{u.full_name || u.email.split("@")[0]}</p>
+                  {unreadCountsByUser[u.id] > 0 && (
+                    <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-rose-500/20">
+                      {unreadCountsByUser[u.id]}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-muted truncate opacity-70 uppercase tracking-widest">@{u.username || "user"}</p>
               </div>
             </button>

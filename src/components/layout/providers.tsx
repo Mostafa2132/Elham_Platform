@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
 import { ToastContainer } from "react-toastify";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useMessageNotification } from "@/hooks/use-message-notification";
 
 // تحميل بوت الدردشة بشكل ديناميكي لتحسين الأداء
 const ChatBot = dynamic(() => import("@/components/ui/chat-bot").then(mod => mod.ChatBot), {
@@ -12,6 +13,7 @@ const ChatBot = dynamic(() => import("@/components/ui/chat-bot").then(mod => mod
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useAuthSession();
+  useMessageNotification();
 
   return (
     <>
