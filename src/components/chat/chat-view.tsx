@@ -131,6 +131,11 @@ export default function ChatView({ locale }: { locale: string }) {
           if ((newMsg.sender_id === user.id && newMsg.receiver_id === selectedUser.id) || 
               (newMsg.sender_id === selectedUser.id && newMsg.receiver_id === user.id)) {
             setMessages((prev) => [...prev, newMsg]);
+            
+            // إذا كانت الرسالة مرسلة لي وأنا داخل المحادثة، أجعلها "مقروءة" فوراً في قاعدة البيانات
+            if (newMsg.receiver_id === user.id) {
+              supabase.from("messages").update({ is_read: true }).eq("id", newMsg.id).then();
+            }
           }
         } else if (payload.eventType === "UPDATE") {
           setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
