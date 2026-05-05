@@ -34,33 +34,7 @@ export function Navbar({ locale }: { locale: Locale }) {
   const { incrementUnreadForUser } = useInteractionStore();
   const { theme, toggleTheme } = useTheme();
   
-  // مراقب عام للرسائل الواردة لتحديث العدادات لحظياً في كل الموقع
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel("global-messages")
-      .on(
-        "postgres_changes",
-        { 
-          event: "INSERT", 
-          schema: "public", 
-          table: "messages", 
-          filter: `receiver_id=eq.${user.id}` 
-        },
-        (payload) => {
-          const msg = payload.new;
-          // زيادة العداد للمرسل
-          incrementUnreadForUser(msg.sender_id);
-          // يمكن إضافة صوت تنبيه هنا مستقبلاً
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, supabase, incrementUnreadForUser]);
+  // مراقب عام للرسائل الواردة يتم إدارته الآن عبر Hook عالمي في الـ Providers
   
   // حالات التحكم في قائمة الموبايل ومودال تسجيل الخروج والبحث
   const [menuOpen, setMenuOpen] = useState(false);

@@ -53,16 +53,15 @@ export function useMessageNotification() {
         },
         (payload) => {
           const newMsg = payload.new;
+          const state = useInteractionStore.getState();
           
-          // منع التكرار باستخدام معرف الرسالة
-          if (processedMessages.current.has(newMsg.id)) return;
-          processedMessages.current.add(newMsg.id);
-          // تنظيف الذاكرة كل فترة
-          if (processedMessages.current.size > 100) processedMessages.current.clear();
-
-          const { activeChatId } = useInteractionStore.getState();
-          if (newMsg.sender_id !== user.id && newMsg.sender_id !== activeChatId) {
-            incrementUnreadForUser(newMsg.sender_id);
+          if (
+            !processedMessages.current.has(newMsg.id) && 
+            newMsg.sender_id !== user.id && 
+            newMsg.sender_id !== state.activeChatId
+          ) {
+            processedMessages.current.add(newMsg.id);
+            state.incrementUnreadForUser(newMsg.sender_id);
           }
         }
       )

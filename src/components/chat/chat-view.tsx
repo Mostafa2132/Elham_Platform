@@ -135,6 +135,7 @@ export default function ChatView({ locale }: { locale: string }) {
             // إذا كانت الرسالة مرسلة لي وأنا داخل المحادثة، أجعلها "مقروءة" فوراً في قاعدة البيانات
             if (newMsg.receiver_id === user.id) {
               supabase.from("messages").update({ is_read: true }).eq("id", newMsg.id).then();
+              resetUnreadForUser(newMsg.sender_id);
             }
           }
         } else if (payload.eventType === "UPDATE") {
