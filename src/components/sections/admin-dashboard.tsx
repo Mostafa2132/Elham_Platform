@@ -5,11 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  FiUsers, FiFileText, FiSpeaker, FiBarChart2, FiImage,
-  FiTrash2, FiToggleLeft, FiToggleRight, FiBell, FiPlusCircle,
-  FiRefreshCw, FiX, FiZap, FiShield, FiStar, FiCheckCircle, FiAlertTriangle
-} from "react-icons/fi";
+import { FiAlertTriangle, FiUsers, FiFileText, FiSpeaker, FiBell, FiShield, FiStar, FiZap, FiTrash2, FiCheckCircle, FiToggleRight, FiToggleLeft, FiRefreshCw, FiClock, FiBarChart2, FiImage, FiPlusCircle } from "react-icons/fi";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
 import { Avatar } from "@/components/ui/avatar";
@@ -33,6 +29,42 @@ const getTabs = (t: any) => [
   { id: "reports" as AdminTab, label: t.admin.reports, icon: <FiAlertTriangle /> },
   { id: "master" as AdminTab, label: t.masterAdmin.title, icon: <FiZap /> },
 ];
+
+function RitualTimer({ isAr }: { isAr: boolean }) {
+  const supabase = getSupabase();
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from("rituals").select("updated_at").eq("id", "daily_ritual").maybeSingle().then(({ data }) => {
+      if (data) setUpdatedAt(data.updated_at);
+    });
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!updatedAt) return;
+    const update = () => {
+      const diff = 86400000 - (Date.now() - new Date(updatedAt).getTime());
+      if (diff <= 0) return setTimeLeft("Expired");
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      setTimeLeft(`${h}h ${m}m`);
+    };
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [updatedAt]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500 uppercase tracking-widest shadow-lg shadow-amber-500/5">
+      <FiClock size={10} className="opacity-60" />
+      <span className="opacity-40">{isAr ? "متبقي:" : "Time left:"}</span>
+      <span className="tabular-nums">{timeLeft}</span>
+    </div>
+  );
+}
 
 export function AdminDashboard() {
   const params = useParams();
@@ -858,38 +890,7 @@ export function AdminDashboard() {
                         <h3 className="text-lg font-bold">{t.masterAdmin.ritualControl}</h3>
                       </div>
                       
-                      {/* Timer for admins */}
-                      {(() => {
-                        const [timeLeftAdmin, setTimeLeftAdmin] = useState<string | null>(null);
-                        const [ritUpdatedAt, setRitUpdatedAt] = useState<string | null>(null);
-
-                        useEffect(() => {
-                          supabase.from("rituals").select("updated_at").eq("id", "daily_ritual").maybeSingle().then(({data}) => {
-                            if(data) setRitUpdatedAt(data.updated_at);
-                          });
-                        }, []);
-
-                        useEffect(() => {
-                          if (!ritUpdatedAt) return;
-                          const update = () => {
-                            const diff = 86400000 - (Date.now() - new Date(ritUpdatedAt).getTime());
-                            if (diff <= 0) return setTimeLeftAdmin("Expired");
-                            const h = Math.floor(diff / 3600000);
-                            const m = Math.floor((diff % 3600000) / 60000);
-                            setTimeLeftAdmin(`${h}h ${m}m`);
-                          };
-                          update();
-                          const interval = setInterval(update, 60000);
-                          return () => clearInterval(interval);
-                        }, [ritUpdatedAt]);
-
-                        return timeLeftAdmin && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500 uppercase tracking-widest shadow-lg shadow-amber-500/5">
-                            <span className="opacity-40">{isAr ? "متبقي:" : "Time left:"}</span>
-                            <span className="tabular-nums">{timeLeftAdmin}</span>
-                          </div>
-                        );
-                      })()}
+                      <RitualTimer isAr={isAr} />
                     </div>
                     <div className="space-y-4">
                       <div className="relative group">

@@ -31,7 +31,6 @@ export function Navbar({ locale }: { locale: Locale }) {
   // الوصول لحالة المصادقة والثيم من الـ Store والـ Context
   const { user, profile } = useAuthStore();
   const unreadChatCount = useInteractionStore(state => state.getGlobalUnreadCount());
-  const { incrementUnreadForUser } = useInteractionStore();
   const { theme, toggleTheme } = useTheme();
   
   // مراقب عام للرسائل الواردة يتم إدارته الآن عبر Hook عالمي في الـ Providers
