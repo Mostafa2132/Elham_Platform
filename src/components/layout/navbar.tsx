@@ -43,7 +43,11 @@ export function Navbar({ locale }: { locale: Locale }) {
   const [reportDesc, setReportDesc] = useState("");
   const [reportType, setReportType] = useState("bug");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const { pendingRequestsCount, pendingReportsCount, setPendingCounts } = useInteractionStore();
+  const adminNotificationCount = pendingRequestsCount + pendingReportsCount;
   const [searchOpen, setSearchOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   // منطق التبديل بين اللغات (عربي/إنجليزي)
   const other = locale === "ar" ? "en" : "ar";
@@ -74,6 +78,56 @@ export function Navbar({ locale }: { locale: Locale }) {
       setReportDesc("");
     }
   };
+
+  useEffect(() => {
+    const loadData = async () => {
+      // 1. Load Ritual Time
+      const { data: rit } = await supabase.from("rituals").select("updated_at").eq("id", "daily_ritual").maybeSingle();
+      if (rit) setUpdatedAt(rit.updated_at);
+
+      // 2. Load Admin Counts
+      if (profile?.role === "admin") {
+        const [{ count: reqCount }, { count: repCount }] = await Promise.all([
+          supabase.from("posts").select("*", { count: "exact", head: true }).eq("seal_requested", true).eq("is_authentic", false),
+          supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending")
+        ]);
+        setPendingCounts(reqCount ?? 0, repCount ?? 0);
+      }
+    };
+    loadData();
+
+    // Real-time for admin
+    let channel: any;
+    if (profile?.role === "admin") {
+      channel = supabase
+        .channel("navbar-admin-counts")
+        .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, async () => {
+          const { count } = await supabase.from("posts").select("*", { count: "exact", head: true }).eq("seal_requested", true).eq("is_authentic", false);
+          setPendingCounts(count ?? 0, useInteractionStore.getState().pendingReportsCount);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, async () => {
+          const { count } = await supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending");
+          setPendingCounts(useInteractionStore.getState().pendingRequestsCount, count ?? 0);
+        })
+        .subscribe();
+    }
+
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [supabase, profile?.role, setPendingCounts]);
+
+  useEffect(() => {
+    if (!updatedAt) return;
+    const updateTimer = () => {
+      const diff = 86400000 - (Date.now() - new Date(updatedAt).getTime());
+      if (diff <= 0) return setTimeLeft(null);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      setTimeLeft(`${h}h ${m}m`);
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000);
+    return () => clearInterval(interval);
+  }, [updatedAt]);
 
   return (
     <header className="sticky top-0 z-[100] px-2 py-2 sm:px-3 sm:py-2.5">
@@ -137,9 +191,16 @@ export function Navbar({ locale }: { locale: Locale }) {
               <NavLink href={`/${locale}/profile`} path={path}>
                 {t.nav.profile}
               </NavLink>
-              {profile?.role === "admin" && (
+               {profile?.role === "admin" && (
                 <NavLink href={`/${locale}/admin`} path={path}>
-                  {t.nav.admin}
+                  <div className="flex items-center gap-2 relative">
+                    {t.nav.admin}
+                    {adminNotificationCount > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse">
+                        {adminNotificationCount}
+                      </span>
+                    )}
+                  </div>
                 </NavLink>
               )}
             </>
@@ -262,10 +323,29 @@ export function Navbar({ locale }: { locale: Locale }) {
               <MobileNavLink href={`/${locale}/profile`} onClick={() => setMenuOpen(false)}>
                 {t.nav.profile}
               </MobileNavLink>
-              {profile?.role === "admin" && (
+               {profile?.role === "admin" && (
                 <MobileNavLink href={`/${locale}/admin`} onClick={() => setMenuOpen(false)}>
-                  {t.nav.admin}
+                  <span className="flex items-center gap-2">
+                    {t.nav.admin}
+                    {adminNotificationCount > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse">
+                        {adminNotificationCount}
+                      </span>
+                    )}
+                  </span>
                 </MobileNavLink>
+              )}
+              
+              {/* Daily Ritual Timer in Mobile Menu */}
+              {timeLeft && (
+                <div className="mx-3 my-2 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                   <div className="flex items-center justify-between">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-muted">{t.ritual.title}</span>
+                     <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                       {timeLeft}
+                     </span>
+                   </div>
+                </div>
               )}
               <button
                 onClick={() => {

@@ -850,11 +850,46 @@ export function AdminDashboard() {
                 <div className="space-y-8 animate-in fade-in duration-500">
                   {/* Ritual Control */}
                   <div className="glass-card rounded-3xl p-6 border border-indigo-500/20">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-                        <FiRefreshCw size={20} />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+                          <FiRefreshCw size={20} />
+                        </div>
+                        <h3 className="text-lg font-bold">{t.masterAdmin.ritualControl}</h3>
                       </div>
-                      <h3 className="text-lg font-bold">{t.masterAdmin.ritualControl}</h3>
+                      
+                      {/* Timer for admins */}
+                      {(() => {
+                        const [timeLeftAdmin, setTimeLeftAdmin] = useState<string | null>(null);
+                        const [ritUpdatedAt, setRitUpdatedAt] = useState<string | null>(null);
+
+                        useEffect(() => {
+                          supabase.from("rituals").select("updated_at").eq("id", "daily_ritual").maybeSingle().then(({data}) => {
+                            if(data) setRitUpdatedAt(data.updated_at);
+                          });
+                        }, []);
+
+                        useEffect(() => {
+                          if (!ritUpdatedAt) return;
+                          const update = () => {
+                            const diff = 86400000 - (Date.now() - new Date(ritUpdatedAt).getTime());
+                            if (diff <= 0) return setTimeLeftAdmin("Expired");
+                            const h = Math.floor(diff / 3600000);
+                            const m = Math.floor((diff % 3600000) / 60000);
+                            setTimeLeftAdmin(`${h}h ${m}m`);
+                          };
+                          update();
+                          const interval = setInterval(update, 60000);
+                          return () => clearInterval(interval);
+                        }, [ritUpdatedAt]);
+
+                        return timeLeftAdmin && (
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500 uppercase tracking-widest shadow-lg shadow-amber-500/5">
+                            <span className="opacity-40">{isAr ? "متبقي:" : "Time left:"}</span>
+                            <span className="tabular-nums">{timeLeftAdmin}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-4">
                       <div className="relative group">

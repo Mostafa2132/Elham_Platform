@@ -104,13 +104,13 @@ export function RitualBanner({ locale }: { locale: Locale }) {
           &quot;{ritual}&quot;
         </h2>
 
-        <div className="flex items-center gap-4 pt-2">
-           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full">
+           <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 uppercase tracking-widest whitespace-nowrap">
               <FiZap size={10} className="animate-pulse" /> {t.ritual.activeNow}
            </div>
            
            {timeLeft && (
-             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+             <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.1)] whitespace-nowrap">
                <span className="opacity-50">{t.ritual.endsIn}</span>
                <span className="font-black tabular-nums">{timeLeft}</span>
              </div>
@@ -118,7 +118,7 @@ export function RitualBanner({ locale }: { locale: Locale }) {
            
            <button 
              onClick={() => setCreateOpen(true)}
-             className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white text-[10px] font-black text-white hover:text-indigo-600 uppercase tracking-widest transition-all shadow-lg"
+             className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white text-[10px] font-black text-indigo-600 uppercase tracking-widest transition-all shadow-xl hover:scale-[1.02] active:scale-95 w-full sm:w-auto mt-1 sm:mt-0"
            >
              <FiPlus size={12} />
              {t.ritual.participate}
