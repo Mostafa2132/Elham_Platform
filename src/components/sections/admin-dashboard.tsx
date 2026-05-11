@@ -189,6 +189,11 @@ export function AdminDashboard() {
         { event: "DELETE", schema: "public", table: "posts" },
         () => load()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reports" },
+        () => load()
+      )
       .subscribe();
 
     return () => {
@@ -344,22 +349,33 @@ export function AdminDashboard() {
       {/* Tab navigation */}
       <div className="glass rounded-2xl overflow-hidden">
         <div className="tab-bar px-4 pt-2">
-          {TABS.map((tabItem, index) => (
-            <button
-              key={tabItem.id}
-              onClick={() => setTab(tabItem.id)}
-              className={`tab-item group relative flex items-center gap-1.5 ${tab === tabItem.id ? "active" : ""}`}
-              title={`Press ${index + 1} to switch`}
-            >
-              {tabItem.icon}
-              <span className="hidden sm:inline">
-                {t.admin[tabItem.id as keyof typeof t.admin] || tabItem.label}
-              </span>
-              <span className="absolute -top-1 -right-1 text-[8px] opacity-0 group-hover:opacity-40 transition-opacity font-bold bg-white/10 px-1 rounded">
-                {index + 1}
-              </span>
-            </button>
-          ))}
+          {TABS.map((tabItem, index) => {
+            const hasNotification = 
+              (tabItem.id === "requests" && requests.length > 0) ||
+              (tabItem.id === "reports" && reports.filter(r => r.status === "pending").length > 0);
+            
+            return (
+              <button
+                key={tabItem.id}
+                onClick={() => setTab(tabItem.id)}
+                className={`tab-item group relative flex items-center gap-1.5 ${tab === tabItem.id ? "active" : ""}`}
+                title={`Press ${index + 1} to switch`}
+              >
+                <div className="relative">
+                  {tabItem.icon}
+                  {hasNotification && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+                  )}
+                </div>
+                <span className="hidden sm:inline">
+                  {t.admin[tabItem.id as keyof typeof t.admin] || tabItem.label}
+                </span>
+                <span className="absolute -top-1 -right-1 text-[8px] opacity-0 group-hover:opacity-40 transition-opacity font-bold bg-white/10 px-1 rounded">
+                  {index + 1}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="p-5">

@@ -159,7 +159,8 @@ export const translations = {
       title: "Daily Inspiration Ritual",
       contribute: "Contribute Wisdom",
       activeNow: "Active Globally",
-      participate: "Participate Now"
+      participate: "Participate Now",
+      endsIn: "Ends in:"
     },
     seal: {
       request: "Request Authenticity Seal",
@@ -360,7 +361,8 @@ export const translations = {
       title: "طقوس الإلهام اليومية",
       contribute: "شارك بحكمتك",
       activeNow: "نشط عالمياً",
-      participate: "شارك الآن"
+      participate: "شارك الآن",
+      endsIn: "ينتهي خلال:"
     },
     seal: {
       request: "طلب وسام الأصالة",

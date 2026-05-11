@@ -242,6 +242,32 @@ export function PostCard({
     setTimeout(() => setVaultAnim(false), 2200);
   };
 
+  // ─── Authenticity Timer ───
+  const [remainingTime, setRemainingTime] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!post.is_authentic) return;
+    
+    const updateTimer = () => {
+      const created = new Date(post.created_at).getTime();
+      const now = Date.now();
+      const diff = 86400000 - (now - created);
+      
+      if (diff <= 0) {
+        setRemainingTime("Expired");
+        return;
+      }
+      
+      const hours = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      setRemainingTime(`${hours}h ${mins}m`);
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000); // update every minute
+    return () => clearInterval(interval);
+  }, [post.is_authentic, post.created_at]);
+
   return (
     <>
       <AnimatePresence>
@@ -345,6 +371,22 @@ export function PostCard({
               <p className="text-muted text-xs mt-0.5">{timeAgo(post.created_at)}</p>
             </div>
           </div>
+
+          {/* Authenticity Timer Display */}
+          {post.is_authentic && remainingTime && (
+            <div className="flex flex-col items-end gap-1 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]" style={{ transform: "translateZ(25px)" }}>
+              <div className="flex items-center gap-1.5 text-amber-500">
+                <FiZap size={10} className="animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {locale === "ar" ? "وسام الأصالة" : "Authentic"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-white/90">
+                <span className="text-[10px] font-mono font-bold">{remainingTime}</span>
+                <span className="text-[8px] opacity-40 uppercase font-black">{locale === "ar" ? "متبقي" : "left"}</span>
+              </div>
+            </div>
+          )}
 
           <div className="flex shrink-0 items-center gap-0 sm:gap-2" style={{ transform: "translateZ(25px)" }}>
           {/* Share/Zen Actions */}

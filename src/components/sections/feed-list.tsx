@@ -133,19 +133,28 @@ export function FeedList() {
         const likedIds = new Set((myLikes ?? []).map((l) => l.post_id));
         const savedIds = new Set((mySaves ?? []).map((s) => s.post_id));
 
-        const hydrated: Post[] = (data ?? []).map((item) => {
-          const record = item as Record<string, unknown>;
-          const likesArr = record.likes as { count: number }[] | null;
-          return {
-            ...record,
-            profiles: Array.isArray(record.profiles)
-              ? record.profiles[0] ?? null
-              : record.profiles,
-            likes_count: likesArr?.[0]?.count ?? 0,
-            liked_by_me: likedIds.has(record.id as string),
-            saved_by_me: savedIds.has(record.id as string),
-          } as Post;
-        });
+        const hydrated: Post[] = (data ?? [])
+          .map((item) => {
+            const record = item as Record<string, unknown>;
+            const likesArr = record.likes as { count: number }[] | null;
+            return {
+              ...record,
+              profiles: Array.isArray(record.profiles)
+                ? record.profiles[0] ?? null
+                : record.profiles,
+              likes_count: likesArr?.[0]?.count ?? 0,
+              liked_by_me: likedIds.has(record.id as string),
+              saved_by_me: savedIds.has(record.id as string),
+            } as Post;
+          })
+          .filter((post) => {
+            // If it's an authenticity post, check if it's older than 24h
+            if (post.is_authentic) {
+              const age = Date.now() - new Date(post.created_at).getTime();
+              return age < 86400000; // 24 hours in ms
+            }
+            return true;
+          });
 
         // مزامنة البيانات مع المخزن العام (Global Store)
         useInteractionStore.getState().addLikedPosts(Array.from(likedIds));

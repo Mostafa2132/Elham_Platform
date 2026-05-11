@@ -26,6 +26,8 @@ import { type Ad, type Locale } from "@/types";
 export function Sidebar({ locale }: { locale: string }) {
   const { user, profile } = useAuthStore();
   const unreadChatCount = useInteractionStore(state => state.getGlobalUnreadCount());
+  const { pendingRequestsCount, pendingReportsCount, setPendingCounts } = useInteractionStore();
+  const adminNotificationCount = pendingRequestsCount + pendingReportsCount;
   const pathname = usePathname();
   const router = useRouter();
   const isAr = locale === "ar";
@@ -84,12 +86,41 @@ export function Sidebar({ locale }: { locale: string }) {
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
         
-        setTrends(sortedTrends);
+      setTrends(sortedTrends);
+      }
+
+      // 3. Load Admin Pending Counts if user is admin
+      if (profile?.role === "admin") {
+        const [{ count: reqCount }, { count: repCount }] = await Promise.all([
+          supabase.from("posts").select("*", { count: "exact", head: true }).eq("seal_requested", true).eq("is_authentic", false),
+          supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending")
+        ]);
+        setPendingCounts(reqCount ?? 0, repCount ?? 0);
       }
     };
 
     loadSidebarData();
-  }, [supabase]);
+
+    // 4. Real-time subscription for admin counts
+    let channel: any;
+    if (profile?.role === "admin") {
+      channel = supabase
+        .channel("admin-sidebar-counts")
+        .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, async () => {
+          const { count } = await supabase.from("posts").select("*", { count: "exact", head: true }).eq("seal_requested", true).eq("is_authentic", false);
+          setPendingCounts(count ?? 0, useInteractionStore.getState().pendingReportsCount);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, async () => {
+          const { count } = await supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending");
+          setPendingCounts(useInteractionStore.getState().pendingRequestsCount, count ?? 0);
+        })
+        .subscribe();
+    }
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [supabase, profile?.role, setPendingCounts]);
 
   // وظيفة تسجيل الخروج
   const logout = async () => {
@@ -177,6 +208,13 @@ export function Sidebar({ locale }: { locale: string }) {
                   <span className="relative flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 px-1.5 text-[10px] font-black text-white shadow-lg shadow-rose-500/30">
                     {unreadChatCount}
                   </span>
+                </div>
+              )}
+
+              {item.href.includes("/admin") && adminNotificationCount > 0 && (
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-20"></span>
+                  <span className="relative flex h-2 w-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50" />
                 </div>
               )}
 

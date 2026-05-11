@@ -12,18 +12,23 @@ export function RitualBanner({ locale }: { locale: Locale }) {
   const t = translations[locale];
   const supabase = getSupabase();
   const [ritual, setRitual] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRitual = async () => {
       const { data } = await supabase
         .from("rituals")
-        .select("content")
+        .select("content, updated_at")
         .eq("id", "daily_ritual")
         .maybeSingle();
       
-      if (data) setRitual(data.content);
+      if (data) {
+        setRitual(data.content);
+        setUpdatedAt(data.updated_at);
+      }
       setLoading(false);
     };
 
@@ -35,12 +40,36 @@ export function RitualBanner({ locale }: { locale: Locale }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "rituals" }, (payload) => {
         if (payload.new && "content" in payload.new) {
           setRitual((payload.new as any).content);
+          setUpdatedAt((payload.new as any).updated_at);
         }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
+
+  useEffect(() => {
+    if (!updatedAt) return;
+    
+    const updateTimer = () => {
+      const created = new Date(updatedAt).getTime();
+      const now = Date.now();
+      const diff = 86400000 - (now - created);
+      
+      if (diff <= 0) {
+        setTimeLeft("Renewing...");
+        return;
+      }
+      
+      const hours = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      setTimeLeft(`${hours}h ${mins}m`);
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000);
+    return () => clearInterval(interval);
+  }, [updatedAt]);
 
   if (loading) return null;
   if (!ritual) return (
@@ -77,8 +106,15 @@ export function RitualBanner({ locale }: { locale: Locale }) {
 
         <div className="flex items-center gap-4 pt-2">
            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
-              <FiZap size={10} /> {t.ritual.activeNow}
+              <FiZap size={10} className="animate-pulse" /> {t.ritual.activeNow}
            </div>
+           
+           {timeLeft && (
+             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+               <span className="opacity-50">{t.ritual.endsIn}</span>
+               <span className="font-black tabular-nums">{timeLeft}</span>
+             </div>
+           )}
            
            <button 
              onClick={() => setCreateOpen(true)}
