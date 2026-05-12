@@ -28,12 +28,12 @@ import { ZenViewer } from "./zen-viewer";
 import { useInteractionStore } from "@/store/interaction-store";
 
 // إعدادات التفاعلات (Reactions) المتاحة للمنشورات
-const REACTIONS = [
-  { id: "like", icon: FiHeart, color: "text-pink-500", bg: "bg-pink-500/10", border: "border-pink-500/20", label: "Like", particles: ["#ec4899", "#f43f5e"] },
-  { id: "love", icon: FiHeart, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", label: "Love", particles: ["#ef4444", "#f43f5e"], fill: true },
-  { id: "wow", icon: FiStar, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20", label: "Wow", particles: ["#06b6d4", "#22d3ee"] },
-  { id: "inspiring", icon: FiZap, color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20", label: "Inspiring", particles: ["#eab308", "#fbbf24"], fill: true },
-  { id: "haha", icon: FiSmile, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", label: "Haha", particles: ["#f97316", "#fb923c"] },
+const REACTIONS = (t: any) => [
+  { id: "like", icon: FiHeart, color: "text-pink-500", bg: "bg-pink-500/10", border: "border-pink-500/20", label: t.reactions.like, particles: ["#ec4899", "#f43f5e"] },
+  { id: "love", icon: FiHeart, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", label: t.reactions.love, particles: ["#ef4444", "#f43f5e"], fill: true },
+  { id: "wow", icon: FiStar, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20", label: t.reactions.wow, particles: ["#06b6d4", "#22d3ee"] },
+  { id: "inspiring", icon: FiZap, color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20", label: t.reactions.inspiring, particles: ["#eab308", "#fbbf24"], fill: true },
+  { id: "haha", icon: FiSmile, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", label: t.reactions.haha, particles: ["#f97316", "#fb923c"] },
 ];
 
 /**
@@ -164,12 +164,12 @@ export function PostCard({
       setShowTemplateSelect(false);
       toast.success(locale === "ar" ? "تم تحميل البطاقة بنجاح! 🎉" : "Card downloaded successfully! 🎉");
     } catch (e) {
-      toast.error(locale === "ar" ? "فشل التحميل" : "Download failed");
+      toast.error(t.common.error);
     }
   };
 
   const triggerReactionEffect = (reactionId: string, rect: DOMRect) => {
-    const reaction = REACTIONS.find(r => r.id === reactionId);
+    const reaction = reactionsList.find(r => r.id === reactionId);
     if (!reaction) return;
 
     confetti({
@@ -185,6 +185,15 @@ export function PostCard({
       scalar: reaction.id === "haha" ? 1.2 : 0.8,
       ticks: 60
     });
+  };
+
+  const handleReaction = async (reactionId: string) => {
+    setSelectedReaction(reactionId);
+    onLike(post);
+    if (reactionBtnRef.current) {
+        triggerReactionEffect(reactionId, reactionBtnRef.current.getBoundingClientRect());
+    }
+    setShowReactions(false);
   };
 
   const timeAgo = (dateStr: string) => {
@@ -210,7 +219,6 @@ export function PostCard({
   const isSaved = checkIsSaved(post.id);
   const [vaultAnim, setVaultAnim] = useState(false);
 
-  // Sync initial state from props to store if not already there
   useEffect(() => {
     if (post.saved_by_me && !isSaved) {
       addSavedPost(post.id);
@@ -220,12 +228,10 @@ export function PostCard({
   const saveToVault = async () => {
     const supabase = getSupabase();
     const { profile } = useAuthStore.getState();
-    if (!profile) return toast.info(
-      locale === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login to save to vault"
-    );
+    if (!profile) return toast.info(t.common.loginRequired);
     
     if (isSaved) {
-      toast.info(locale === "ar" ? "محفوظ بالفعل!" : "Already saved!");
+      toast.info(t.common.alreadySaved);
       return;
     }
 
@@ -237,12 +243,10 @@ export function PostCard({
     if (error) return toast.error(error.message);
 
     addSavedPost(post.id);
-    // Trigger the in-card vault animation
     setVaultAnim(true);
     setTimeout(() => setVaultAnim(false), 2200);
   };
 
-  // ─── Authenticity Timer ───
   const [remainingTime, setRemainingTime] = useState<string | null>(null);
   
   useEffect(() => {
@@ -264,7 +268,7 @@ export function PostCard({
     };
     
     updateTimer();
-    const interval = setInterval(updateTimer, 60000); // update every minute
+    const interval = setInterval(updateTimer, 60000);
     return () => clearInterval(interval);
   }, [post.is_authentic, post.created_at]);
 
@@ -292,7 +296,6 @@ export function PostCard({
             : `backdrop-blur-xl border border-white/10 shadow-xl ${themeConfig.class}`
         }`}
       >
-        {/* ─── Vault Saved Overlay ─── */}
         <AnimatePresence>
           {vaultAnim && (
             <motion.div
@@ -318,10 +321,10 @@ export function PostCard({
                 className="text-center"
               >
                 <p className="font-black text-base text-white">
-                  {locale === "ar" ? "تم الحفظ في الفولت! 🔐" : "Saved to Vault! 🔐"}
+                  {t.actions.savedInVault} 🔐
                 </p>
                 <p className="text-[11px] text-white/50 mt-1 font-bold uppercase tracking-widest">
-                  {locale === "ar" ? "في بروفايلك → فولت" : "Find it in Profile → Vault"}
+                  {t.common.findInVault}
                 </p>
               </motion.div>
             </motion.div>
@@ -336,7 +339,6 @@ export function PostCard({
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted group-hover:text-indigo-400 transition-colors">{t.flow.partOfFlow}</span>
         </button>
       )}
-        {/* Header */}
         <div className="mb-3 flex items-start justify-between gap-2 sm:gap-3" style={{ transform: "translateZ(20px)" }}>
           <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
             <Link href={`/${locale}/profile/${post.author_id}`} className="hover:opacity-80 transition-opacity shrink-0 mt-0.5">
@@ -349,9 +351,8 @@ export function PostCard({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Link href={`/${locale}/profile/${post.author_id}`} className="font-bold text-sm leading-tight transition-colors hover:text-indigo-400 break-words max-w-full">
-                  {post.profiles?.full_name || post.profiles?.email?.split("@")[0] || (locale === "ar" ? "مجهول" : "Anonymous")}
+                  {post.profiles?.full_name || post.profiles?.email?.split("@")[0] || t.common.anonymous}
                 </Link>
-                {/* Badge Display */}
                 {(() => {
                   const badge = getBadge(post.profiles?.is_pro ? 30 : 2, locale);
                   return (
@@ -372,24 +373,22 @@ export function PostCard({
             </div>
           </div>
 
-          {/* Authenticity Timer Display */}
           {post.is_authentic && remainingTime && (
             <div className="flex flex-col items-end gap-1 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]" style={{ transform: "translateZ(25px)" }}>
               <div className="flex items-center gap-1.5 text-amber-500">
                 <FiZap size={10} className="animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {locale === "ar" ? "وسام الأصالة" : "Authentic"}
+                  {t.seal.authentic}
                 </span>
               </div>
               <div className="flex items-center gap-1 text-white/90">
                 <span className="text-[10px] font-mono font-bold">{remainingTime}</span>
-                <span className="text-[8px] opacity-40 uppercase font-black">{locale === "ar" ? "متبقي" : "left"}</span>
+                <span className="text-[8px] opacity-40 uppercase font-black">{t.seal.left}</span>
               </div>
             </div>
           )}
 
           <div className="flex shrink-0 items-center gap-0 sm:gap-2" style={{ transform: "translateZ(25px)" }}>
-          {/* Share/Zen Actions */}
           <div className="flex items-center gap-0 sm:gap-1">
             <button
                onClick={() => setCreateOpen(true)}
@@ -408,7 +407,7 @@ export function PostCard({
             <button
               onClick={() => setZenOpen(true)}
               className="rounded-xl p-1 text-muted transition-all duration-300 hover:bg-white/5 hover:text-foreground active:scale-95 sm:p-2"
-              title={locale === "ar" ? "وضع الزن" : "Zen Mode"}
+              title={t.actions.zenMode}
             >
               <FiSun size={16} className="transition-transform hover:rotate-45" />
             </button>
@@ -431,16 +430,13 @@ export function PostCard({
               </div>
             </div>
 
-            {/* ─── Dropdown Portal — rendered at body level to escape 3D stacking context ─── */}
             {mounted && menuOpen && createPortal(
               <>
-                {/* Backdrop */}
                 <div
                   className="fixed inset-0"
                   style={{ zIndex: 9998 }}
                   onClick={() => setMenuOpen(false)}
                 />
-                {/* Menu */}
                 <AnimatePresence>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.92, y: -6 }}
@@ -456,16 +452,14 @@ export function PostCard({
                       pointerEvents: "auto",
                     }}
                   >
-                    {/* View Flow Journey */}
                     <button
                       onClick={() => { setFlowOpen(true); setMenuOpen(false); }}
                       className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold hover:bg-white/10 rounded-xl transition-all group/btn"
                     >
                       <FiGitBranch size={16} className="text-muted group-hover/btn:text-indigo-400" />
-                      <span>{locale === "ar" ? "رؤية رحلة الإلهام" : "View Flow Journey"}</span>
+                      <span>{t.actions.viewJourney}</span>
                     </button>
 
-                    {/* Request Authenticity Seal */}
                     {canEdit && !post.is_authentic && (
                       <button
                         disabled={post.seal_requested}
@@ -477,7 +471,6 @@ export function PostCard({
                       </button>
                     )}
 
-                    {/* ─── Save to Vault ─── */}
                     <button
                       onClick={() => { saveToVault(); setMenuOpen(false); }}
                       className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold hover:bg-white/10 rounded-xl transition-all group/btn"
@@ -488,12 +481,11 @@ export function PostCard({
                       />
                       <span className={isSaved ? "text-amber-400" : ""}>
                         {isSaved
-                          ? (locale === "ar" ? "✓ تم الحفظ في الفولت" : "✓ Saved to Vault")
-                          : (locale === "ar" ? "حفظ في الفولت" : "Save to Vault")}
+                          ? `✓ ${t.actions.savedInVault}`
+                          : t.actions.saveToVault}
                       </span>
                     </button>
 
-                    {/* Edit & Delete — owner only */}
                     {canEdit && (
                       <>
                         <div className="my-1 border-t border-white/5" />
@@ -520,12 +512,10 @@ export function PostCard({
             )}
           </div>
 
-        {/* Content */}
         <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ transform: "translateZ(30px)" }}>
           {finalContent}
         </p>
 
-        {/* Image */}
         {post.image_url && (
           <div className="relative mt-3 h-56 w-full overflow-hidden rounded-xl md:h-72">
             <Image
@@ -538,16 +528,13 @@ export function PostCard({
           </div>
         )}
 
-        {/* Footer */}
         <div className="mt-5 flex items-center gap-3">
-          {/* Reaction Picker Trigger Wrapper */}
           <div 
             ref={reactionBtnRef}
             className="relative"
             onMouseEnter={handleMouseEnterReactions}
             onMouseLeave={handleMouseLeaveReactions}
           >
-            {/* Reaction popup rendered as portal at body level to escape 3D stacking context */}
             {mounted && showReactions && createPortal(
               <div
                 onMouseEnter={handleMouseEnterReactions}
@@ -575,17 +562,12 @@ export function PostCard({
                       boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)",
                     }}
                   >
-                    {REACTIONS.map((r) => (
+                    {reactionsList.map((r) => (
                       <motion.button
                         key={r.id}
                         whileHover={{ scale: 1.3, y: -5 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={(e) => {
-                          setSelectedReaction(r.id);
-                          onLike(post);
-                          triggerReactionEffect(r.id, e.currentTarget.getBoundingClientRect());
-                          setShowReactions(false);
-                        }}
+                        onClick={() => handleReaction(r.id)}
                         className={`p-2 rounded-full transition-all duration-200 ${r.bg} ${r.color} hover:shadow-lg`}
                         title={r.label}
                       >

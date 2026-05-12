@@ -16,7 +16,7 @@ import { AdSkeleton } from "@/components/ui/skeletons";
 import { Avatar } from "@/components/ui/avatar";
 import { Modal } from "@/components/ui/modal";
 import { translations } from "@/data/translations";
-import { getBadge } from "@/lib/constants";
+import { getBadge, POST_THEMES } from "@/lib/constants";
 import { type Ad, type Locale } from "@/types";
 
 /**
@@ -71,22 +71,32 @@ export function Sidebar({ locale }: { locale: string }) {
         masters: activeMasters ?? 0
       });
 
-      // تحليل المحتوى لاستخراج الهاشتاجات (Tags)
+      // تحليل المحتوى لاستخراج الهاشتاجات والتيمات
       if (recentPosts) {
         const tagMap: Record<string, number> = {};
         recentPosts.forEach(p => {
-          const tags = p.content.match(/#[\w\u0621-\u064A]+/g);
-          tags?.forEach((tag: string) => {
-            tagMap[tag] = (tagMap[tag] || 0) + 1;
+          // الهاشتاجات العادية
+          const hashtags = p.content.match(/#[\w\u0621-\u064A]+/g);
+          hashtags?.forEach((tag: string) => { tagMap[tag] = (tagMap[tag] || 0) + 1; });
+
+          // التيمات المختارة [T:theme_id]
+          const themes = p.content.match(/\[T:([\w-]+)\]/g);
+          themes?.forEach((tStr: string) => {
+            const themeId = tStr.match(/\[T:([\w-]+)\]/)?.[1];
+            if (themeId) {
+              const themeObj = POST_THEMES.find(th => th.id === themeId);
+              const formatted = isAr ? (themeObj?.name_ar || themeId) : `#${themeObj?.name || themeId}`;
+              tagMap[formatted] = (tagMap[formatted] || 0) + 1;
+            }
           });
         });
 
         const sortedTrends = Object.entries(tagMap)
-          .map(([tag, count]) => ({ tag, count, growth: "+new" }))
+          .map(([tag, count]) => ({ tag, count, growth: count > 1 ? `+${count * 5}%` : "NEW" }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
         
-      setTrends(sortedTrends);
+        setTrends(sortedTrends);
       }
 
       // 3. Load Admin Pending Counts if user is admin

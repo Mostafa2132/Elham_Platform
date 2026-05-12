@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { FiAlertTriangle, FiUsers, FiFileText, FiSpeaker, FiBell, FiShield, FiStar, FiZap, FiTrash2, FiCheckCircle, FiToggleRight, FiToggleLeft, FiRefreshCw, FiClock, FiBarChart2, FiImage, FiPlusCircle } from "react-icons/fi";
+import { FiAlertTriangle, FiUsers, FiFileText, FiSpeaker, FiBell, FiShield, FiStar, FiZap, FiTrash2, FiCheckCircle, FiToggleRight, FiToggleLeft, FiRefreshCw, FiClock, FiBarChart2, FiImage, FiPlusCircle, FiTrendingUp } from "react-icons/fi";
 import { getSupabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
 import { Avatar } from "@/components/ui/avatar";
@@ -84,6 +84,10 @@ export function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, posts: 0, ads: 0, likes: 0 });
   const [leaderboard, setLeaderboard] = useState<(Profile & { posts_count: number; likes_count: number })[]>([]);
   const [chartData, setChartData] = useState<number[]>([]);
+  const [likesChartData, setLikesChartData] = useState<number[]>([]);
+  const [usersChartData, setUsersChartData] = useState<number[]>([]);
+  const [trendingTags, setTrendingTags] = useState<{tag: string, count: number}[]>([]);
+  const [growthPercentage, setGrowthPercentage] = useState(0);
 
   const [addAdOpen, setAddAdOpen] = useState(false);
   const [addAnnOpen, setAddAnnOpen] = useState(false);
@@ -105,7 +109,7 @@ export function AdminDashboard() {
       { count: lc },
     ] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("posts").select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email),seal_requested,is_authentic").order("created_at", { ascending: false }).limit(50),
+      supabase.from("posts").select("id,author_id,content,image_url,created_at,updated_at,profiles(full_name,avatar_url,email),seal_requested,is_authentic").order("created_at", { ascending: false }).limit(200),
       supabase.from("ads").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("reports").select("*,profiles(full_name,email,avatar_url)").order("created_at", { ascending: false }),
@@ -151,20 +155,86 @@ export function AdminDashboard() {
       setLeaderboard(lb);
     }
 
-    // Calculate Real Chart Data (Last 7 Days)
-    if (u) {
+    // Calculate Post Activity Trends (Last 7 Days)
+    if (p) {
       const now = new Date();
+      now.setHours(23, 59, 59, 999);
+      
       const last7Days = Array.from({ length: 8 }, (_, i) => {
-        const d = new Date();
+        const d = new Date(now);
         d.setDate(now.getDate() - (7 - i));
         d.setHours(0, 0, 0, 0);
         return d;
       });
 
-      const userGrowth = last7Days.map(date => {
-        return (u as Profile[]).filter(user => new Date(user.created_at) <= new Date(date.getTime() + 86400000)).length;
+      const postActivity = last7Days.map(date => {
+        const start = date.getTime();
+        const end = start + 86400000;
+        return (p as Post[]).filter(post => {
+          const createdAt = new Date(post.created_at).getTime();
+          return createdAt >= start && createdAt < end;
+        }).length;
       });
-      setChartData(userGrowth);
+      
+      setChartData(postActivity);
+
+      // Calculate Likes Activity Trends
+      const { data: allLikes } = await supabase.from("likes").select("created_at");
+      if (allLikes) {
+        const likesActivity = last7Days.map(date => {
+          const start = date.getTime();
+          const end = start + 86400000;
+          return (allLikes as any[]).filter(l => {
+            const createdAt = new Date(l.created_at).getTime();
+            return createdAt >= start && createdAt < end;
+          }).length;
+        });
+        setLikesChartData(likesActivity);
+      }
+
+      // Calculate Users Trends
+      if (u) {
+        const usersActivity = last7Days.map(date => {
+          const start = date.getTime();
+          const end = start + 86400000;
+          return (u as Profile[]).filter(user => {
+            const createdAt = new Date(user.created_at).getTime();
+            return createdAt >= start && createdAt < end;
+          }).length;
+        });
+        setUsersChartData(usersActivity);
+      }
+
+      // Calculate Trending Now (Top Themes)
+      const themeCounts: Record<string, number> = {};
+      (p as Post[]).forEach(post => {
+        const match = post.content.match(/\[T:([\w-]+)\]/);
+        if (match && match[1]) {
+          const tag = match[1];
+          themeCounts[tag] = (themeCounts[tag] || 0) + 1;
+        }
+      });
+      const topTags = Object.entries(themeCounts)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+      setTrendingTags(topTags);
+
+      // Calculate Growth %
+      const thisWeekCount = postActivity.reduce((a, b) => a + b, 0);
+      const prevWeekCount = (p as Post[]).filter(post => {
+        const createdAt = new Date(post.created_at).getTime();
+        const startPrev = now.getTime() - (14 * 86400000);
+        const endPrev = now.getTime() - (7 * 86400000);
+        return createdAt >= startPrev && createdAt < endPrev;
+      }).length;
+
+      if (prevWeekCount > 0) {
+        const growth = ((thisWeekCount - prevWeekCount) / prevWeekCount) * 100;
+        setGrowthPercentage(Math.round(growth));
+      } else {
+        setGrowthPercentage(thisWeekCount > 0 ? 100 : 0);
+      }
     }
     setLoading(false);
   }, [supabase]);
@@ -434,9 +504,9 @@ export function AdminDashboard() {
                     {/* Line Chart Section */}
                     <div className="md:col-span-2 glass-card rounded-2xl p-6 space-y-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm tracking-tight">{isAr ? "اتجاهات النمو" : "Growth Trends"}</h3>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
-                          {isAr ? "+14% مقارنة بالشهر الماضي" : "+14% vs last month"}
+                        <h3 className="font-bold text-sm tracking-tight">{t.admin.postActivity}</h3>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${growthPercentage >= 0 ? "text-emerald-500 bg-emerald-500/10" : "text-rose-500 bg-rose-500/10"}`}>
+                          {growthPercentage >= 0 ? "+" : ""}{growthPercentage}% {t.admin.vsLastWeek}
                         </span>
                       </div>
                       <div className="h-48 relative mt-4">
@@ -447,23 +517,83 @@ export function AdminDashboard() {
                       </div>
                     </div>
 
+                    {/* New Users Chart (Fills the gap) */}
+                    <div className="glass-card rounded-2xl p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-sm tracking-tight">{t.admin.newUsers}</h3>
+                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+                          <FiUsers size={14} />
+                        </div>
+                      </div>
+                      <div className="h-28 relative mt-4">
+                        <LineChart data={usersChartData.length > 0 ? usersChartData : [0, 0, 0, 0, 0, 0, 0, 0]} color="#f59e0b" />
+                      </div>
+                      <div className="flex justify-between text-muted text-[8px] font-bold uppercase tracking-tighter px-1 mt-2">
+                        {(isAr ? ["س", "ج", "ح"] : ["Fri", "Sat", "Sun"]).map(d => <span key={d}>{d}</span>)}
+                      </div>
+                      <p className="text-[10px] text-muted text-center italic mt-2">{t.admin.steadyGrowth}</p>
+                    </div>
+
+                    {/* Interaction Chart Section */}
+                    <div className="md:col-span-2 glass-card rounded-2xl p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-sm tracking-tight">{t.admin.interactionsTitle}</h3>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-lg">
+                          {t.admin.liveActivity}
+                        </span>
+                      </div>
+                      <div className="h-48 relative mt-4">
+                        <LineChart data={likesChartData.length > 0 ? likesChartData : [0, 0, 0, 0, 0, 0, 0, 0]} color="#22d3ee" />
+                      </div>
+                      <div className="flex justify-between text-muted text-[10px] font-bold uppercase tracking-tighter px-2">
+                        {(isAr ? ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد", "اليوم"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Today"]).map(d => <span key={d}>{d}</span>)}
+                      </div>
+                    </div>
+
+                    {/* Trending Now Section */}
+                    <div className="glass-card rounded-2xl p-6 space-y-4">
+                       <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+                             <FiTrendingUp size={18} />
+                          </div>
+                          <h3 className="font-bold text-sm tracking-tight">{t.admin.trendingNow}</h3>
+                       </div>
+                       <div className="space-y-3 pt-2">
+                          {trendingTags.length > 0 ? trendingTags.map((tTag, i) => {
+                             const themeObj = POST_THEMES.find(th => th.id === tTag.tag);
+                             const label = themeObj ? (isAr ? themeObj.name_ar : themeObj.name) : tTag.tag;
+                             return (
+                                <div key={tTag.tag} className="flex items-center justify-between group">
+                                   <div className="flex items-center gap-2">
+                                      <span className="text-xs font-black text-indigo-500/50">#0{i+1}</span>
+                                      <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">{label}</span>
+                                   </div>
+                                   <span className="text-[10px] font-black text-muted bg-white/5 px-2 py-0.5 rounded-lg">{tTag.count} {t.admin.postsSuffix}</span>
+                                </div>
+                             );
+                          }) : (
+                             <p className="text-xs text-muted italic text-center py-4">{t.admin.noTrending}</p>
+                          )}
+                       </div>
+                    </div>
+
                     {/* Progress Rings Section */}
                     <div className="glass-card rounded-2xl p-6 space-y-6">
-                      <h3 className="font-bold text-sm tracking-tight">{isAr ? "تحقيق الأهداف" : "Target Achievement"}</h3>
+                      <h3 className="font-bold text-sm tracking-tight">{t.admin.targetAchievement}</h3>
                       <div className="flex flex-col items-center justify-center gap-6 py-4">
                         {(() => {
                           const userGoal = 100;
                           const progress = Math.min(100, Math.round((stats.users / userGoal) * 100));
-                          return <ProgressRing value={progress} label={isAr ? "هدف المشتركين (100)" : "User Target (100)"} color="#f59e0b" />;
+                          return <ProgressRing value={progress} label={`${t.admin.userTarget} (100)`} color="#f59e0b" />;
                         })()}
                         <div className="grid grid-cols-2 gap-4 w-full">
                           <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                             <p className="text-lg font-black">{users.filter(u => u.role === "admin").length}</p>
-                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{isAr ? "مدراء" : "Admins"}</p>
+                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{t.admin.admins}</p>
                           </div>
                           <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
                             <p className="text-lg font-black">{profile?.is_pro ? 1 : 0}</p>
-                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{isAr ? "حالة البرو" : "Your Pro Status"}</p>
+                            <p className="text-[9px] uppercase font-bold text-muted mt-0.5">{t.admin.yourProStatus}</p>
                           </div>
                         </div>
                       </div>
@@ -472,7 +602,7 @@ export function AdminDashboard() {
 
                   {/* Horizontal Category Bar Section */}
                   <div className="glass-card rounded-2xl p-6 space-y-6">
-                    <h3 className="font-bold text-sm tracking-tight">{locale === "ar" ? "توزيع المحتوى" : "Content Distribution"}</h3>
+                    <h3 className="font-bold text-sm tracking-tight">{t.admin.contentDistribution}</h3>
                     <div className="space-y-4">
                       {(() => {
                         const total = posts.length || 1;
@@ -494,7 +624,7 @@ export function AdminDashboard() {
                         // Map tag IDs to beautiful names using POST_THEMES
                         const statsList = Object.entries(themeCounts).map(([tagId, count]) => {
                           const themeObj = POST_THEMES.find(t => t.id === tagId);
-                          const label = themeObj ? themeObj.name : tagId.charAt(0).toUpperCase() + tagId.slice(1);
+                          const label = themeObj ? (isAr ? themeObj.name_ar : themeObj.name) : tagId.charAt(0).toUpperCase() + tagId.slice(1);
                           return { label, val: Math.round((count / total) * 100), count };
                         });
 
@@ -882,15 +1012,17 @@ export function AdminDashboard() {
                 <div className="space-y-8 animate-in fade-in duration-500">
                   {/* Ritual Control */}
                   <div className="glass-card rounded-3xl p-6 border border-indigo-500/20">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+                        <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0">
                           <FiRefreshCw size={20} />
                         </div>
-                        <h3 className="text-lg font-bold">{t.masterAdmin.ritualControl}</h3>
+                        <h3 className="text-base sm:text-lg font-bold leading-tight">{t.masterAdmin.ritualControl}</h3>
                       </div>
                       
-                      <RitualTimer isAr={isAr} />
+                      <div className="self-start sm:self-auto">
+                        <RitualTimer isAr={isAr} />
+                      </div>
                     </div>
                     <div className="space-y-4">
                       <div className="relative group">
@@ -927,19 +1059,25 @@ export function AdminDashboard() {
                     
                     <div className="space-y-3">
                        {posts.filter(p => (p as any).seal_requested && !(p as any).is_authentic).map(p => (
-                         <div key={p.id} className="glass rounded-2xl p-4 border border-white/5 flex flex-col md:flex-row gap-4">
-                            <div className="flex-1">
-                               <p className="text-sm italic leading-relaxed">&quot;{p.content.replace(/\[T:\w+\]/g, "").replace(/\[P:[\w-]+\]/g, "").trim()}&quot;</p>
-                               <div className="mt-2 flex items-center gap-2">
-                                  <Avatar src={p.profiles?.avatar_url} size={20} />
-                                  <span className="text-[10px] font-bold text-muted uppercase">{p.profiles?.full_name}</span>
+                         <div key={p.id} className="glass rounded-2xl p-4 border border-white/5 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                            <div className="flex-1 min-w-0">
+                               <p className="text-sm italic leading-relaxed text-white/90 line-clamp-2 sm:line-clamp-none">&quot;{p.content.replace(/\[T:\w+\]/g, "").replace(/\[P:[\w-]+\]/g, "").trim()}&quot;</p>
+                               <div className="mt-3 flex items-center gap-2">
+                                  <Avatar src={p.profiles?.avatar_url} size={24} />
+                                  <span className="text-[10px] font-black text-muted uppercase tracking-wider">{p.profiles?.full_name}</span>
                                </div>
                             </div>
-                            <div className="flex gap-2 shrink-0">
-                               <button onClick={() => approveSeal(p.id, p.author_id)} className="btn-primary bg-emerald-500 hover:bg-emerald-600 text-white border-none py-1.5 px-4 text-xs font-bold rounded-xl">
+                            <div className="flex gap-2 w-full sm:w-auto shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                               <button 
+                                 onClick={() => approveSeal(p.id, p.author_id)} 
+                                 className="flex-1 sm:flex-none btn-primary bg-emerald-500 hover:bg-emerald-600 text-white border-none py-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95"
+                               >
                                   {t.masterAdmin.approve}
                                 </button>
-                               <button onClick={() => rejectSeal(p.id, p.author_id)} className="btn-ghost text-red-400 hover:bg-red-500/10 py-1.5 px-4 text-xs font-bold rounded-xl">
+                               <button 
+                                 onClick={() => rejectSeal(p.id, p.author_id)} 
+                                 className="flex-1 sm:flex-none btn-ghost text-red-400 hover:bg-red-500/10 py-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95"
+                               >
                                   {t.masterAdmin.reject}
                                 </button>
                             </div>

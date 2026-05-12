@@ -322,13 +322,13 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
                 key={theme.id}
                 type="button"
                 onClick={() => setSelectedTheme(theme.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition-all border-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   selectedTheme === theme.id 
-                    ? "border-[var(--brand-a)] scale-105 shadow-lg" 
-                    : "border-transparent opacity-60 grayscale hover:grayscale-0 hover:opacity-100"
-                } ${theme.class}`}
+                    ? "bg-white text-indigo-900 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105" 
+                    : "bg-white/5 text-white/40 hover:bg-white/10"
+                }`}
               >
-                {theme.name}
+                {locale === "ar" ? theme.name_ar : theme.name}
               </button>
             ))}
           </div>

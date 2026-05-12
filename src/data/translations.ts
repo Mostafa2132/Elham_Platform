@@ -49,6 +49,11 @@ export const translations = {
       uploading: "Uploading image...",
       failedProcess: "Failed to process image",
       selectImage: "Click to upload image",
+      anonymous: "Anonymous",
+      findInVault: "Find it in Profile → Vault",
+      loginRequired: "Please login to continue",
+      alreadySaved: "Already saved!",
+      error: "An error occurred",
     },
     modal: {
       editProfile: "Edit Profile",
@@ -106,7 +111,23 @@ export const translations = {
       bug: "Bug",
       user: "User",
       post: "Post",
-      other: "Other"
+      other: "Other",
+      postActivity: "Post Activity",
+      interactionsTitle: "Interactions (Likes)",
+      newUsers: "New Users",
+      vsLastWeek: "vs last week",
+      liveActivity: "Live Activity",
+      steadyGrowth: "Steady weekly growth",
+      trendingNow: "Trending Now",
+      noTrending: "No trending themes yet",
+      postsSuffix: "posts",
+      targetAchievement: "Target Achievement",
+      userTarget: "User Target",
+      admins: "Admins",
+      yourProStatus: "Your Pro Status",
+      contentDistribution: "Content Distribution",
+      classicNoTheme: "Classic (No Theme)",
+      classicOthers: "Classic / Others"
     },
     profileView: {
       editProfile: "Edit Profile",
@@ -165,7 +186,22 @@ export const translations = {
     seal: {
       request: "Request Authenticity Seal",
       requested: "Seal Pending Review",
-      authentic: "Authentic Wisdom"
+      authentic: "Authentic Wisdom",
+      left: "left"
+    },
+    reactions: {
+      like: "Like",
+      love: "Love",
+      wow: "Wow",
+      inspiring: "Inspiring",
+      haha: "Haha"
+    },
+    actions: {
+      zenMode: "Zen Mode",
+      viewJourney: "View Flow Journey",
+      saveToVault: "Save to Vault",
+      savedInVault: "Saved to Vault",
+      chooseTheme: "Choose an inspiring theme"
     },
     masterAdmin: {
       title: "Master Dashboard",
@@ -251,6 +287,11 @@ export const translations = {
       uploading: "جاري رفع الصورة...",
       failedProcess: "فشلت معالجة الصورة",
       selectImage: "اضغط لرفع صورة",
+      anonymous: "مجهول",
+      findInVault: "ستجدها في البروفايل → الخزانة",
+      loginRequired: "يرجى تسجيل الدخول للمتابعة",
+      alreadySaved: "محفوظة بالفعل!",
+      error: "حدث خطأ ما",
     },
     modal: {
       editProfile: "تعديل الملف الشخصي",
@@ -308,7 +349,23 @@ export const translations = {
       bug: "مشكلة تقنية",
       user: "مستخدم",
       post: "منشور",
-      other: "آخر"
+      other: "آخر",
+      postActivity: "نشاط المنشورات",
+      interactionsTitle: "التفاعل (إعجابات)",
+      newUsers: "مشتركين جدد",
+      vsLastWeek: "مقارنة بالأسبوع الماضي",
+      liveActivity: "نشاط حي",
+      steadyGrowth: "نمو أسبوعي مستمر",
+      trendingNow: "الرائج الآن",
+      noTrending: "لا توجد مواضيع رائجة حالياً",
+      postsSuffix: "منشور",
+      targetAchievement: "تحقيق الأهداف",
+      userTarget: "هدف المشتركين",
+      admins: "مدراء",
+      yourProStatus: "حالة البرو",
+      contentDistribution: "توزيع المحتوى",
+      classicNoTheme: "كلاسيكي (بدون تيم)",
+      classicOthers: "أخرى / كلاسيكي"
     },
     profileView: {
       editProfile: "تعديل الحساب",
@@ -367,7 +424,22 @@ export const translations = {
     seal: {
       request: "طلب وسام الأصالة",
       requested: "قيد المراجعة",
-      authentic: "حكمة أصيلة"
+      authentic: "حكمة أصيلة",
+      left: "متبقي"
+    },
+    reactions: {
+      like: "أعجبني",
+      love: "أحببته",
+      wow: "واو",
+      inspiring: "ملهم",
+      haha: "هاها"
+    },
+    actions: {
+      zenMode: "وضع الزن",
+      viewJourney: "رؤية رحلة الإلهام",
+      saveToVault: "حفظ في الخزانة",
+      savedInVault: "تم الحفظ في الخزانة",
+      chooseTheme: "اختر تيم ملهِم للمنشور"
     },
     masterAdmin: {
       title: "لوحة التحكم الرئيسية",

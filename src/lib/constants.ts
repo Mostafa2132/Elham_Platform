@@ -1,12 +1,12 @@
 export const POST_THEMES = [
-  { id: "default", name: "Classic Glass", class: "glass" },
-  { id: "midnight", name: "Midnight Nebula", class: "bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-slate-900/40 border-indigo-500/30" },
-  { id: "aurora", name: "Frosted Aurora", class: "bg-gradient-to-br from-emerald-500/20 via-cyan-500/20 to-indigo-500/20 border-emerald-500/30" },
-  { id: "dawn", name: "Golden Dawn", class: "bg-gradient-to-br from-amber-500/20 via-orange-600/20 to-rose-600/20 border-amber-500/30" },
-  { id: "sunset", name: "Crimson Sunset", class: "bg-gradient-to-br from-rose-500/20 via-pink-600/20 to-purple-600/20 border-rose-500/30" },
-  { id: "ocean", name: "Deep Ocean", class: "bg-gradient-to-br from-blue-600/20 via-cyan-600/20 to-teal-600/20 border-blue-500/30" },
-  { id: "forest", name: "Emerald Forest", class: "bg-gradient-to-br from-green-600/20 via-emerald-600/20 to-lime-600/20 border-green-500/30" },
-  { id: "royal", name: "Royal Amethyst", class: "bg-gradient-to-br from-violet-600/20 via-purple-600/20 to-indigo-600/20 border-violet-500/30" },
+  { id: "default", name: "Classic Glass", name_ar: "كلاسيكي شفاف", class: "glass" },
+  { id: "midnight", name: "Midnight Nebula", name_ar: "سديم المنتصف", class: "bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-slate-900/40 border-indigo-500/30" },
+  { id: "aurora", name: "Frosted Aurora", name_ar: "أورورا متجمدة", class: "bg-gradient-to-br from-emerald-500/20 via-cyan-500/20 to-indigo-500/20 border-emerald-500/30" },
+  { id: "dawn", name: "Golden Dawn", name_ar: "فجر ذهبي", class: "bg-gradient-to-br from-amber-500/20 via-orange-600/20 to-rose-600/20 border-amber-500/30" },
+  { id: "sunset", name: "Crimson Sunset", name_ar: "غروب قرمزي", class: "bg-gradient-to-br from-rose-500/20 via-pink-600/20 to-purple-600/20 border-rose-500/30" },
+  { id: "ocean", name: "Deep Ocean", name_ar: "محيط عميق", class: "bg-gradient-to-br from-blue-600/20 via-cyan-600/20 to-teal-600/20 border-blue-500/30" },
+  { id: "forest", name: "Emerald Forest", name_ar: "غابة زمردية", class: "bg-gradient-to-br from-green-600/20 via-emerald-600/20 to-lime-600/20 border-green-500/30" },
+  { id: "royal", name: "Royal Amethyst", name_ar: "أرجوان ملكي", class: "bg-gradient-to-br from-violet-600/20 via-purple-600/20 to-indigo-600/20 border-violet-500/30" },
 ];
 
 export const BADGE_LEVELS = [
