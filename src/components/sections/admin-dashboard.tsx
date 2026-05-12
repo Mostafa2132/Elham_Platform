@@ -45,7 +45,8 @@ function RitualTimer({ isAr }: { isAr: boolean }) {
     if (!updatedAt) return;
     const update = () => {
       const diff = 86400000 - (Date.now() - new Date(updatedAt).getTime());
-      if (diff <= 0) return setTimeLeft("Expired");
+      const t = translations[isAr ? "ar" : "en"];
+      if (diff <= 0) return setTimeLeft(t.seal.expired);
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       setTimeLeft(`${h}h ${m}m`);
@@ -60,7 +61,7 @@ function RitualTimer({ isAr }: { isAr: boolean }) {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500 uppercase tracking-widest shadow-lg shadow-amber-500/5">
       <FiClock size={10} className="opacity-60" />
-      <span className="opacity-40">{isAr ? "متبقي:" : "Time left:"}</span>
+      <span className="opacity-40">{translations[isAr ? "ar" : "en"].admin.timeLeft}</span>
       <span className="tabular-nums">{timeLeft}</span>
     </div>
   );
@@ -281,7 +282,7 @@ export function AdminDashboard() {
           if (post.seal_requested || post.is_authentic !== undefined) {
             load();
             if (post.seal_requested && !post.is_authentic) {
-              toast.warning(locale === "ar" ? "🛡️ طلب أصالة جديد قيد الانتظار!" : "🛡️ New Authenticity Request pending!");
+              toast.warning(t.notifications.newSealRequest);
             }
           }
         }
@@ -307,14 +308,14 @@ export function AdminDashboard() {
     const { error } = await supabase.from("posts").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setPosts((prev) => prev.filter((p) => p.id !== id));
-    toast.success(locale === "ar" ? "تم حذف المنشور" : "Post deleted");
+    toast.success(t.notifications.postDeleted);
   };
 
   const deleteUser = async (id: string) => {
     const { error } = await supabase.from("profiles").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setUsers((prev) => prev.filter((u) => u.id !== id));
-    toast.success(locale === "ar" ? "تم حذف المستخدم" : "User removed");
+    toast.success(t.notifications.userRemoved);
   };
 
   const toggleAd = async (ad: Ad) => {
@@ -327,7 +328,7 @@ export function AdminDashboard() {
     const { error } = await supabase.from("ads").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setAds((prev) => prev.filter((a) => a.id !== id));
-    toast.success(locale === "ar" ? "تم حذف الإعلان" : "Ad removed");
+    toast.success(t.notifications.adRemoved);
   };
 
   const toggleAnnouncement = async (ann: Announcement) => {
@@ -340,7 +341,7 @@ export function AdminDashboard() {
     const { error } = await supabase.from("announcements").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-    toast.success(locale === "ar" ? "تم حذف التنبيه" : "Announcement removed");
+    toast.success(t.notifications.announcementRemoved);
   };
 
   const approveSeal = async (postId: string, authorId: string) => {
@@ -352,7 +353,7 @@ export function AdminDashboard() {
       user_id: authorId,
       type: "seal_approved",
       target_id: postId,
-      content: locale === "ar" ? "تم قبول طلب توثيق منشورك بنجاح! 🎉" : "Your post authenticity seal has been approved! 🎉"
+      content: t.notifications.sealApproved
     });
 
     // تحديث قائمة المنشورات العامة وقائمة الطلبات المعلقة فوراً
@@ -371,14 +372,14 @@ export function AdminDashboard() {
       user_id: authorId,
       type: "seal_rejected",
       target_id: postId,
-      content: locale === "ar" ? "للأسف تم رفض طلب التوثيق لهذا المنشور." : "Your authenticity request was rejected for this post."
+      content: t.notifications.sealRejected
     });
 
     // تحديث قائمة المنشورات العامة وقائمة الطلبات المعلقة فوراً
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, seal_requested: false } : p));
     setRequests(prev => prev.filter(p => p.id !== postId));
     
-    toast.info(locale === "ar" ? "تم رفض الطلب" : "Request rejected");
+    toast.info(t.admin.requestRejected);
   };
 
   const [ritualText, setRitualText] = useState("");
@@ -673,7 +674,7 @@ export function AdminDashboard() {
                       <FiStar className="text-amber-500" />
                       {t.admin.topPosters}
                     </h3>
-                    <p className="text-muted text-sm">{leaderboard.length} total creators</p>
+                    <p className="text-muted text-sm">{leaderboard.length} {t.admin.totalCreators}</p>
                   </div>
 
                   <div className="grid gap-3">
@@ -728,7 +729,7 @@ export function AdminDashboard() {
 
               {tab === "users" && (
                 <div className="space-y-2">
-                  <p className="text-muted text-sm mb-3">{users.length} total users</p>
+                  <p className="text-muted text-sm mb-3">{users.length} {t.admin.totalUsersLower}</p>
                   {users.map((u) => (
                     <div
                       key={u.id}
@@ -757,7 +758,7 @@ export function AdminDashboard() {
               {tab === "posts" && (
                 <div className="space-y-4">
                   <p className="text-muted text-sm mb-2 font-bold tracking-wide uppercase">
-                    {locale === "ar" ? `أحدث ${posts.length} منشورات` : `${posts.length} recent posts`}
+                    {posts.length} {t.admin.recentPostsCount}
                   </p>
                   <div className="grid gap-3">
                     {posts.map((p) => {
@@ -776,7 +777,7 @@ export function AdminDashboard() {
                                 {p.profiles?.full_name || p.profiles?.email?.split("@")[0] || "Anonymous"}
                               </p>
                               <p className="text-sm leading-relaxed text-muted line-clamp-3">
-                                {cleanContent || <span className="italic opacity-50">Empty post</span>}
+                                {cleanContent || <span className="italic opacity-50">{t.admin.emptyPost}</span>}
                               </p>
                             </div>
                           </div>

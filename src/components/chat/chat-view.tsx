@@ -171,11 +171,11 @@ export default function ChatView({ locale }: { locale: string }) {
       setNewMessage("");
       setMessages(prev => prev.map(m => m.id === msgToEdit.id ? { ...m, content, is_edited: true } : m));
       const { error } = await supabase.from("messages").update({ content, is_edited: true }).eq("id", msgToEdit.id);
-      if (error) toast.error("Failed to edit message");
+      if (error) toast.error(t.chat.failEdit);
     } else {
       setNewMessage("");
       const { error } = await supabase.from("messages").insert({ sender_id: user.id, receiver_id: selectedUser.id, content });
-      if (error) toast.error("Failed to send message");
+      if (error) toast.error(t.chat.failSend);
     }
     setSending(false);
   };
@@ -209,9 +209,9 @@ export default function ChatView({ locale }: { locale: string }) {
         image_url: publicUrl 
       });
       if (error) throw error;
-      toast.success(isAr ? "تم إرسال الصورة" : "Image sent");
+      toast.success(t.chat.imageSent);
     } catch (err: any) {
-      toast.error(isAr ? "فشل إرسال الصورة" : "Failed to send image: " + err.message);
+      toast.error(t.chat.failImage + ": " + err.message);
     } finally {
       setSending(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -249,7 +249,7 @@ export default function ChatView({ locale }: { locale: string }) {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('chat-backgrounds').getPublicUrl(fileName);
       setTempBgUrl(publicUrl);
-      toast.info(isAr ? "تم اختيار الصورة، اضغط حفظ للتأكيد" : "Image selected, click Save to confirm");
+      toast.info(t.chat.bgSelected);
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
     } finally {
@@ -272,7 +272,7 @@ export default function ChatView({ locale }: { locale: string }) {
     } else {
       setChatSettings({ nickname: tempNickname || null, background_url: tempBgUrl });
       setShowSettings(false);
-      toast.success(isAr ? "تم حفظ الإعدادات" : "Settings saved!");
+      toast.success(t.chat.settingsSaved);
     }
     setLoading(false);
   };
@@ -487,16 +487,16 @@ export default function ChatView({ locale }: { locale: string }) {
                   <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                     className="w-full max-w-md glass-card p-6 rounded-[2.5rem] shadow-2xl border border-white/10 text-center"
                   >
-                    <h3 className="text-xl font-black mb-4">{isAr ? "تأكيد إرسال الصورة" : "Confirm Send Image"}</h3>
+                    <h3 className="text-xl font-black mb-4">{t.chat.confirmSend}</h3>
                     <div className="rounded-2xl overflow-hidden mb-6 border border-white/10 aspect-video bg-black/20">
                       <img src={imageConfirmPreview} alt="confirm" className="w-full h-full object-contain" />
                     </div>
                     <div className="flex gap-3">
                       <button onClick={() => { setImageToConfirm(null); setImageConfirmPreview(null); }} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-2xl font-bold transition-all">
-                        {isAr ? "إلغاء" : "Cancel"}
+                        {t.common.cancel}
                       </button>
                       <button onClick={handleSendImage} className="flex-1 py-3 bg-[var(--brand-a)] text-white rounded-2xl font-black shadow-lg shadow-[var(--brand-a)]/30 hover:scale-[1.02] transition-all">
-                        {isAr ? "إرسال الآن" : "Send Now"}
+                        {t.chat.sendNow}
                       </button>
                     </div>
                   </motion.div>
@@ -528,7 +528,7 @@ export default function ChatView({ locale }: { locale: string }) {
                     className="w-full max-md:h-fit max-w-md glass-card p-8 rounded-[3rem] shadow-2xl border border-white/10 relative"
                   >
                     <button onClick={() => setShowSettings(false)} className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-full text-muted"><FiX size={20} /></button>
-                    <h3 className="text-2xl font-black mb-8 tracking-tight">{isAr ? "إعدادات الدردشة" : "Chat Settings"}</h3>
+                    <h3 className="text-2xl font-black mb-8 tracking-tight">{t.chat.chatSettings}</h3>
                     <div className="space-y-8">
                       <div className="space-y-4">
                         <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">{t.chat.rename}</label>
@@ -538,13 +538,13 @@ export default function ChatView({ locale }: { locale: string }) {
                         <label className="text-[10px] font-black text-muted uppercase tracking-[0.2em]">{isAr ? "خلفية المحادثة" : "Chat Background"}</label>
                         <div className="grid grid-cols-2 gap-4">
                           <label className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-3xl cursor-pointer transition-all group ${tempBgUrl ? "border-emerald-500/50 bg-emerald-500/5" : "border-white/10 hover:bg-white/5 hover:border-[var(--brand-a)]/30"}`}>
-                            <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} /><FiUploadCloud size={24} className={`mb-2 ${uploading ? "animate-bounce text-[var(--brand-a)]" : tempBgUrl ? "text-emerald-500" : "text-muted group-hover:text-[var(--brand-a)]"}`} /><span className="text-[10px] font-bold text-muted uppercase tracking-wider">{uploading ? (isAr ? "جاري الرفع..." : "Uploading...") : tempBgUrl ? (isAr ? "تم الاختيار" : "Selected") : (isAr ? "رفع صورة" : "Upload Image")}</span>
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} /><FiUploadCloud size={24} className={`mb-2 ${uploading ? "animate-bounce text-[var(--brand-a)]" : tempBgUrl ? "text-emerald-500" : "text-muted group-hover:text-[var(--brand-a)]"}`} /><span className="text-[10px] font-bold text-muted uppercase tracking-wider">{uploading ? t.chat.uploading : tempBgUrl ? t.chat.selected : t.chat.uploadImg}</span>
                           </label>
-                          <button onClick={() => setTempBgUrl(null)} className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/5 rounded-3xl hover:bg-red-500/10 transition-all group"><FiTrash2 size={24} className="mb-2 text-muted group-hover:text-red-500" /><span className="text-[10px] font-bold text-muted uppercase tracking-wider group-hover:text-red-500">{isAr ? "حذف الخلفية" : "Remove"}</span></button>
+                          <button onClick={() => setTempBgUrl(null)} className="flex flex-col items-center justify-center p-6 border border-white/5 bg-white/5 rounded-3xl hover:bg-red-500/10 transition-all group"><FiTrash2 size={24} className="mb-2 text-muted group-hover:text-red-500" /><span className="text-[10px] font-bold text-muted uppercase tracking-wider group-hover:text-red-500">{t.chat.remove}</span></button>
                         </div>
                       </div>
                     </div>
-                    <button onClick={saveSettings} disabled={loading} className="w-full mt-10 py-4 bg-[var(--brand-a)] text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[var(--brand-a)]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">{loading ? (isAr ? "جاري الحفظ..." : "Saving...") : (isAr ? "حفظ التغييرات" : "Save Changes")}</button>
+                    <button onClick={saveSettings} disabled={loading} className="w-full mt-10 py-4 bg-[var(--brand-a)] text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[var(--brand-a)]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">{loading ? t.chat.saving : t.chat.saveChanges}</button>
                   </motion.div>
                 </div>
               )}
@@ -558,9 +558,9 @@ export default function ChatView({ locale }: { locale: string }) {
                     className="w-full max-w-sm glass-card p-8 rounded-[2.5rem] shadow-2xl border border-white/10 text-center"
                   >
                     <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20"><FiAlertCircle size={32} /></div>
-                    <h3 className="text-xl font-black mb-2">{isAr ? "حذف الرسالة؟" : "Delete Message?"}</h3>
-                    <p className="text-sm text-muted mb-8">{isAr ? "هل أنت متأكد؟ لا يمكن التراجع." : "Are you sure? This cannot be undone."}</p>
-                    <div className="flex gap-3"><button onClick={() => setMessageToDelete(null)} className="flex-1 py-3 bg-white/5 rounded-2xl font-bold">{isAr ? "تراجع" : "Cancel"}</button><button onClick={confirmDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl font-black">{isAr ? "حذف" : "Delete"}</button></div>
+                    <h3 className="text-xl font-black mb-2">{t.chat.deleteMsg}</h3>
+                    <p className="text-sm text-muted mb-8">{t.chat.deleteWarn}</p>
+                    <div className="flex gap-3"><button onClick={() => setMessageToDelete(null)} className="flex-1 py-3 bg-white/5 rounded-2xl font-bold">{t.common.cancel}</button><button onClick={confirmDelete} className="flex-1 py-3 bg-red-500 text-white rounded-2xl font-black">{t.common.delete}</button></div>
                   </motion.div>
                 </div>
               )}

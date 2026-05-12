@@ -9,6 +9,14 @@ export const POST_THEMES = [
   { id: "royal", name: "Royal Amethyst", name_ar: "أرجوان ملكي", class: "bg-gradient-to-br from-violet-600/20 via-purple-600/20 to-indigo-600/20 border-violet-500/30" },
 ];
 
+export const POST_CATEGORIES = [
+  { id: "wisdom", name: "Wisdom", name_ar: "حكمة", icon: "✨" },
+  { id: "motivation", name: "Motivation", name_ar: "تحفيز", icon: "🚀" },
+  { id: "story", name: "Story", name_ar: "قصة", icon: "📖" },
+  { id: "advice", name: "Advice", name_ar: "نصيحة", icon: "💡" },
+  { id: "reflection", name: "Reflection", name_ar: "تأمل", icon: "🧘" },
+];
+
 export const BADGE_LEVELS = [
   { posts: 0, label_en: "Inspired Learner", label_ar: "متعلم ملهم", color: "text-slate-400", bg: "bg-slate-400/10", icon: "✨" },
   { posts: 3, label_en: "Rising Inspirer", label_ar: "مُلهِم صاعد", color: "text-emerald-400", bg: "bg-emerald-400/10", icon: "🌱" },

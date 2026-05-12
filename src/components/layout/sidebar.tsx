@@ -16,7 +16,7 @@ import { AdSkeleton } from "@/components/ui/skeletons";
 import { Avatar } from "@/components/ui/avatar";
 import { Modal } from "@/components/ui/modal";
 import { translations } from "@/data/translations";
-import { getBadge, POST_THEMES } from "@/lib/constants";
+import { getBadge, POST_THEMES, POST_CATEGORIES } from "@/lib/constants";
 import { type Ad, type Locale } from "@/types";
 
 /**
@@ -79,20 +79,20 @@ export function Sidebar({ locale }: { locale: string }) {
           const hashtags = p.content.match(/#[\w\u0621-\u064A]+/g);
           hashtags?.forEach((tag: string) => { tagMap[tag] = (tagMap[tag] || 0) + 1; });
 
-          // التيمات المختارة [T:theme_id]
-          const themes = p.content.match(/\[T:([\w-]+)\]/g);
-          themes?.forEach((tStr: string) => {
-            const themeId = tStr.match(/\[T:([\w-]+)\]/)?.[1];
-            if (themeId) {
-              const themeObj = POST_THEMES.find(th => th.id === themeId);
-              const formatted = isAr ? (themeObj?.name_ar || themeId) : `#${themeObj?.name || themeId}`;
+          // التصنيفات المختارة [C:category_id]
+          const categories = p.content.match(/\[C:([\w-]+)\]/g);
+          categories?.forEach((cStr: string) => {
+            const catId = cStr.match(/\[C:([\w-]+)\]/)?.[1];
+            if (catId) {
+              const catObj = POST_CATEGORIES.find(c => c.id === catId);
+              const formatted = isAr ? (catObj?.name_ar || catId) : `#${catObj?.name || catId}`;
               tagMap[formatted] = (tagMap[formatted] || 0) + 1;
             }
           });
         });
 
         const sortedTrends = Object.entries(tagMap)
-          .map(([tag, count]) => ({ tag, count, growth: count > 1 ? `+${count * 5}%` : "NEW" }))
+          .map(([tag, count]) => ({ tag, count, growth: count > 1 ? `+${count * 5}%` : t.sidebar.new }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
         
@@ -308,7 +308,7 @@ export function Sidebar({ locale }: { locale: string }) {
                     {item.tag}
                   </p>
                   <p className="text-[10px] font-bold text-muted uppercase tracking-tighter">
-                    {item.count} {isAr ? "منشور" : "posts"}
+                    {item.count} {t.sidebar.postsCount}
                   </p>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export function Sidebar({ locale }: { locale: string }) {
               if (error) throw new Error(error);
               if (url) window.location.href = url;
             } catch (err: unknown) {
-              toast.error((err as Error).message || "Failed to checkout");
+              toast.error((err as Error).message || t.sidebar.failCheckout);
             }
           }}
           className="w-full relative group overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl shadow-orange-500/20"
@@ -368,7 +368,7 @@ export function Sidebar({ locale }: { locale: string }) {
 
       {/* Elegant Mini Footer */}
       <div className="px-6 flex flex-wrap gap-x-4 gap-y-2 opacity-30 hover:opacity-100 transition-opacity duration-500 mt-4">
-        {["Privacy", "Terms", "Support", "Cookies"].map(link => (
+        {[t.sidebar.privacy, t.sidebar.terms, t.sidebar.support, t.sidebar.cookies].map(link => (
           <button key={link} className="text-[10px] font-black uppercase tracking-widest hover:text-[var(--brand-a)] transition-colors">
             {link}
           </button>
@@ -376,10 +376,10 @@ export function Sidebar({ locale }: { locale: string }) {
         <p className="text-[10px] font-bold w-full mt-2">© 2026 ELHAM ELITE</p>
       </div>
 
-      <Modal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} title={isAr ? "تسجيل الخروج" : "Logout"}>
+      <Modal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} title={t.nav.logout}>
         <div className="space-y-6">
           <p className="text-muted">
-            {isAr ? "هل أنت متأكد أنك تريد تسجيل الخروج من إلهام؟" : "Are you sure you want to log out from Elham?"}
+            {t.sidebar.logoutConfirm}
           </p>
           <div className="flex items-center gap-3 justify-end">
             <button onClick={() => setShowLogoutModal(false)} className="btn-ghost">

@@ -15,7 +15,7 @@ import { useParams } from "next/navigation";
 import { translations } from "@/data/translations";
 import { type Locale, type Post } from "@/types";
 import confetti from "canvas-confetti";
-import { POST_THEMES } from "@/lib/constants";
+import { POST_THEMES, POST_CATEGORIES } from "@/lib/constants";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -35,21 +35,22 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
   const [uploading, setUploading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState("default");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const formik = useFormik({
     initialValues: { content: "", image: null as File | null },
     validationSchema: Yup.object({
-      content: Yup.string().min(4, "Post too short").required("Content is required"),
+      content: Yup.string().min(4, t.modal.postTooShort).required(t.modal.contentRequired),
     }),
     onSubmit: async (values, helpers) => {
-      if (!user) return toast.error(locale === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
+      if (!user) return toast.error(t.common.loginRequired);
       const ensured = await ensureProfile(user);
       if (ensured.error) return toast.error(ensured.error.message);
 
       let image_url: string | null = null;
       if (values.image) {
         setUploading(true);
-        toast.info(locale === "ar" ? "جاري رفع الصورة..." : "Uploading image...", { toastId: "upload", autoClose: false });
+        toast.info(t.common.uploading, { toastId: "upload", autoClose: false });
         try {
           const compressed = await compressImage(values.image, 1200);
           const ext = "webp";
@@ -68,12 +69,13 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
         } catch (err) {
           setUploading(false);
           toast.dismiss("upload");
-          return toast.error(locale === "ar" ? "فشلت معالجة الصورة" : "Failed to process image");
+          return toast.error(t.common.failedProcess);
         }
         setUploading(false);
       }
 
       let prefixedContent = selectedTheme !== "default" ? `[T:${selectedTheme}]${values.content}` : values.content;
+      if (selectedCategory) prefixedContent = `[C:${selectedCategory}]${prefixedContent}`;
       if (parentId) prefixedContent = `[P:${parentId}]${prefixedContent}`;
 
       const { data, error } = await supabase
@@ -103,7 +105,7 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
       }, 250);
 
-      toast.success(locale === "ar" ? "تم نشر المنشور بنجاح! 🎉" : "Post published! 🎉");
+      toast.success(t.modal.postPublished);
       const newPost: Post = {
         ...(data as Post),
         profiles: {
@@ -143,7 +145,6 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
   const generateAIQuote = () => {
     const pools = {
       en: [
-        // Growth & Resilience
         "The only way to do great work is to love what you do — and keep going even when it's hard. ✨",
         "Growth is not a destination; it's a direction you choose every single day. 🌱",
         "Every master was once a disaster. Keep building, keep believing. 💪",
@@ -152,30 +153,25 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
         "Small consistent steps will always outrun rare heroic leaps. 🐾",
         "Don't count the days — make the days count. ⏳✨",
         "The secret of getting ahead is getting started. No matter how small. 🔥",
-        // Wisdom & Mindset
         "Clarity is power. Know what you want, and the universe will conspire to give it to you. 🌌",
         "Your thoughts are the architects of your destiny — build wisely. 🏛️",
         "Wisdom is not knowing everything — it's knowing what truly matters. 🌿",
         "Be the energy you wish to attract. What you radiate, you receive. 🔮",
         "Silence is where the deepest ideas are born. Don't fear the quiet. 🌙",
         "The mind that opens to a new idea never returns to its original size. 🌀",
-        // Creativity & Art
         "Inspiration exists, but it has to find you working. Don't wait — create. 🎨",
         "Creativity is intelligence having fun. Let your mind dance freely. 🎭",
         "Every blank page is a universe waiting to be born. 📖",
         "Art is not what you see, but what you make others see. 👁️",
-        // Morning & Energy
         "This morning, you have 86,400 seconds — spend them like the treasure they are. ☀️",
         "Wake up with determination. Go to bed with satisfaction. 🌅",
         "Today is not just another day — it's a new chance to rewrite your story. 📝",
-        // Success & Legacy
         "Success is not final, failure is not fatal — it's the courage to continue that counts. 🦅",
         "What you do today is the legacy you leave tomorrow. Make it meaningful. 🌍",
         "The world needs your light. Don't dim yourself to fit in. ⚡",
         "Not all those who wander are lost — some are just finding the extraordinary path. 🧭",
       ],
       ar: [
-        // نمو وصمود
         "النجاح ليس النهاية، والفشل ليس قاتلاً — إنما الشجاعة لمواصلة الطريق هي ما يهم. 🦅",
         "لا تنتظر الفرصة المثالية، بل اصنع الفرصة من اللحظة الحالية! 🚀",
         "كل خبير كان يوماً مبتدئاً — استمر وستصل. 💪",
@@ -184,22 +180,18 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
         "إمكاناتك لا حدود لها — القيد الوحيد هو ما تصدقه عن نفسك. 💡",
         "لا تعد الأيام، بل اجعل الأيام تُعدّ. ⏳",
         "سر التقدم هو البدء — الآن، بأي خطوة، بأي حجم. 🔥",
-        // حكمة وتأمل
         "الوضوح قوة — اعرف ما تريد، وسيتآمر الكون لمنحك إياه. 🌌",
         "أفكارك هي معمار مصيرك — ابنِ بحكمة وإتقان. 🏛️",
         "الحكمة ليست أن تعرف كل شيء، بل أن تعرف ما يستحق المعرفة. 🌿",
         "كن الطاقة التي تريد أن تجتذب — ما تشعّ به، يعود إليك. 🔮",
         "في الصمت تُولد أعمق الأفكار — لا تهرب من الهدوء. 🌙",
         "العقل الذي يتفتح على فكرة جديدة لا يعود لحجمه الأصلي أبداً. 🌀",
-        // إبداع وفن
         "الإلهام موجود دائماً، لكنه يجب أن يجدك تعمل — لا تنتظر. 🎨",
         "الإبداع هو الذكاء حين يستمتع — دع عقلك يرقص بحرية. 🎭",
         "كل صفحة بيضاء هي كون ينتظر أن يُولد على يديك. 📖",
-        // صباح وطاقة
         "هذا الصباح لديك ٨٦،٤٠٠ ثانية — أنفقها كالكنز الذي هي عليه. ☀️",
         "استيقظ بعزيمة، وانم بارتياح. 🌅",
         "اليوم ليس مجرد يوم آخر — إنه فرصة جديدة لإعادة كتابة قصتك. 📝",
-        // نجاح وإرث
         "ما تفعله اليوم هو الإرث الذي تتركه غداً — اجعله ذا معنى. 🌍",
         "العالم يحتاج لنورك — لا تخفت لتناسب الآخرين. ⚡",
         "ليس كل من يتجول ضائعاً — بعضهم يجد الطريق الاستثنائي. 🧭",
@@ -208,7 +200,6 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
     };
 
     const langPool = locale === "ar" ? pools.ar : pools.en;
-    // Pick truly random, avoid repeating last one
     const lastQuote = formik.values.content;
     let filtered = langPool.filter(q => q !== lastQuote);
     if (filtered.length === 0) filtered = langPool;
@@ -216,19 +207,19 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
 
     formik.setFieldValue("content", random);
     toast.success(
-      locale === "ar" ? "تم توليد فكرة ملهِمة جديدة! 🪄" : "New AI inspiration generated! 🪄",
+      t.modal.aiInspiration,
       { icon: <span>🤖</span> }
     );
   };
 
 
   const handleVoiceInput = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitAudioContext; // fallback
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitAudioContext;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
-    if (!SpeechRecognition) {
-      toast.error(locale === "ar" ? "متصفحك لا يدعم التعرف على الصوت" : "Speech recognition not supported in this browser");
+    if (!SpeechRec) {
+      toast.error(t.modal.speechNotSupported);
       return;
     }
 
@@ -239,7 +230,7 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
 
     recognition.onstart = () => {
       setIsListening(true);
-      toast.info(locale === "ar" ? "جاري الاستماع..." : "Listening...", { toastId: "voice", autoClose: false });
+      toast.info(t.modal.listening, { toastId: "voice", autoClose: false });
     };
 
     recognition.onresult = (event: any) => {
@@ -247,14 +238,14 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
       formik.setFieldValue("content", formik.values.content + " " + transcript);
       setIsListening(false);
       toast.dismiss("voice");
-      toast.success(locale === "ar" ? "تم تحويل الصوت إلى نص!" : "Voice converted to text!");
+      toast.success(t.modal.voiceConverted);
     };
 
     recognition.onerror = (event: any) => {
       console.error(event.error);
       setIsListening(false);
       toast.dismiss("voice");
-      toast.error(locale === "ar" ? "فشل التعرف على الصوت" : "Speech recognition failed");
+      toast.error(t.modal.speechFailed);
     };
 
     recognition.onend = () => {
@@ -281,9 +272,9 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
           />
           <div className="flex-1">
             <p className="font-medium text-sm">
-              {profile?.full_name || user?.email?.split("@")[0] || "You"}
+              {profile?.full_name || user?.email?.split("@")[0] || t.modal.you}
             </p>
-            <p className="text-muted text-xs">Sharing publicly</p>
+            <p className="text-muted text-xs">{t.modal.sharingPublicly}</p>
           </div>
         </div>
 
@@ -314,8 +305,30 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
           </div>
         )}
 
+        {/* Category Selector */}
         <div>
-          <label className="input-label mb-2">{locale === "ar" ? "اختر تيم ملهِم للمنشور" : "Select an inspiring theme"}</label>
+          <label className="input-label mb-2">{t.modal.selectCategory}</label>
+          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar pt-1">
+            {POST_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
+                  selectedCategory === cat.id
+                    ? "bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20"
+                    : "bg-white/5 text-muted border-white/5 hover:bg-white/10 hover:border-white/10"
+                }`}
+              >
+                <span>{cat.icon}</span>
+                {locale === "ar" ? cat.name_ar : cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="input-label mb-2">{t.modal.selectTheme}</label>
           <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar pt-1">
             {POST_THEMES.map((theme) => (
               <button
@@ -358,7 +371,7 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
               }`}
             >
               <FiMic size={16} className={isListening ? "animate-bounce" : ""} />
-              <span className="hidden sm:inline">{locale === "ar" ? "تحدث" : "Speak"}</span>
+              <span className="hidden sm:inline">{t.modal.speak}</span>
             </button>
 
             {/* Magic Wand AI Button */}
@@ -369,7 +382,7 @@ export function CreatePostModal({ open, onClose, onCreated, parentId }: CreatePo
               className="flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 py-2 text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:scale-[1.03] active:scale-[0.97] shadow-md shadow-purple-500/30 transition-all whitespace-nowrap"
             >
               <FiZap size={14} className="fill-white" />
-              <span>{locale === "ar" ? "إلهام ذكي" : "AI Suggest"}</span>
+              <span>{t.modal.aiSuggest}</span>
             </button>
           </div>
           </div>

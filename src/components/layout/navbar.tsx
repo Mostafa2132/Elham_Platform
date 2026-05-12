@@ -72,7 +72,7 @@ export function Navbar({ locale }: { locale: Locale }) {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success(locale === "ar" ? "تم إرسال بلاغك بنجاح. شكراً لك!" : "Report submitted successfully. Thank you!");
+      toast.success(t.report.success);
       setShowReportModal(false);
       setReportDesc("");
     }
@@ -258,7 +258,7 @@ export function Navbar({ locale }: { locale: Locale }) {
               <button
                 className="p-1.5 rounded-full text-muted hover:text-amber-500 transition-all duration-300 relative group/btn"
                 onClick={() => setShowReportModal(true)}
-                title={locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}
+                title={t.report.title}
               >
                 <motion.div
                   whileHover={{ scale: 1.15, rotate: 10 }}
@@ -354,7 +354,7 @@ export function Navbar({ locale }: { locale: Locale }) {
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-[var(--glass)] transition-colors text-amber-500"
               >
                 <FiAlertTriangle size={16} />
-                {locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}
+                {t.report.title}
               </button>
               <button
                 onClick={() => {
@@ -388,10 +388,10 @@ export function Navbar({ locale }: { locale: Locale }) {
         </motion.div>
       )}
 
-      <Modal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} title={locale === "ar" ? "تسجيل الخروج" : "Logout"}>
+      <Modal open={showLogoutModal} onClose={() => setShowLogoutModal(false)} title={t.nav.logout}>
         <div className="space-y-6">
           <p className="text-muted">
-            {locale === "ar" ? "هل أنت متأكد أنك تريد تسجيل الخروج من إلهام؟" : "Are you sure you want to log out from Elham?"}
+            {t.sidebar.logoutConfirm}
           </p>
           <div className="flex items-center gap-3 justify-end">
             <button onClick={() => setShowLogoutModal(false)} className="btn-ghost">
@@ -405,42 +405,42 @@ export function Navbar({ locale }: { locale: Locale }) {
       </Modal>
 
       {/* Report a Problem Modal */}
-      <Modal open={showReportModal} onClose={() => setShowReportModal(false)} title={locale === "ar" ? "الإبلاغ عن مشكلة" : "Report a Problem"}>
+      <Modal open={showReportModal} onClose={() => setShowReportModal(false)} title={t.report.title}>
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-muted mb-2 block">
-              {locale === "ar" ? "نوع المشكلة" : "Problem Type"}
+              {t.report.problemType}
             </label>
             <select 
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 ring-amber-500/30 transition-all [&>option]:bg-gray-900"
             >
-              <option value="bug">{locale === "ar" ? "مشكلة تقنية (Bug)" : "Technical Bug"}</option>
-              <option value="user">{locale === "ar" ? "مستخدم مزعج" : "Spam/Abusive User"}</option>
-              <option value="post">{locale === "ar" ? "منشور مخالف" : "Inappropriate Post"}</option>
-              <option value="other">{locale === "ar" ? "شيء آخر" : "Other"}</option>
+              <option value="bug">{t.report.technicalBug}</option>
+              <option value="user">{t.report.spamUser}</option>
+              <option value="post">{t.report.inappropriatePost}</option>
+              <option value="other">{t.report.other}</option>
             </select>
           </div>
           <div>
             <label className="text-sm font-medium text-muted mb-2 block">
-              {locale === "ar" ? "وصف المشكلة" : "Description"}
+              {t.report.description}
             </label>
             <textarea 
               rows={4}
               value={reportDesc}
               onChange={(e) => setReportDesc(e.target.value)}
-              placeholder={locale === "ar" ? "اشرح المشكلة بالتفصيل..." : "Describe the problem in detail..."}
+              placeholder={t.report.descPlaceholder}
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 ring-amber-500/30 transition-all resize-none"
             />
           </div>
           
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setShowReportModal(false)} className="px-4 py-2 text-sm text-muted hover:text-white transition-colors">
-              {locale === "ar" ? "إلغاء" : "Cancel"}
+              {t.common.cancel}
             </button>
             <button onClick={handleReport} disabled={isSubmittingReport || !reportDesc.trim()} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/20">
-              {isSubmittingReport ? "..." : (locale === "ar" ? "إرسال البلاغ" : "Submit Report")}
+              {isSubmittingReport ? "..." : t.report.submit}
             </button>
           </div>
         </div>

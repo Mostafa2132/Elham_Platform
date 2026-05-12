@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { Avatar } from "@/components/ui/avatar";
 import { type Locale } from "@/types";
 import { useRouter } from "next/navigation";
+import { translations } from "@/data/translations";
 
 interface Notification {
   id: string;
@@ -40,14 +41,15 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
     const now = new Date();
     const then = new Date(date);
     const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
+    const t = translations[locale];
 
-    if (seconds < 60) return isAr ? "الآن" : "Just now";
+    if (seconds < 60) return t.notificationPopover.justNow;
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return isAr ? `منذ ${minutes} دقيقة` : `${minutes}m ago`;
+    if (minutes < 60) return `${t.notificationPopover.agoPrefix}${minutes}${t.notificationPopover.minutesAgo}${t.notificationPopover.agoSuffix}`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return isAr ? `منذ ${hours} ساعة` : `${hours}h ago`;
+    if (hours < 24) return `${t.notificationPopover.agoPrefix}${hours}${t.notificationPopover.hoursAgo}${t.notificationPopover.agoSuffix}`;
     const days = Math.floor(hours / 24);
-    if (days < 7) return isAr ? `منذ ${days} أيام` : `${days}d ago`;
+    if (days < 7) return `${t.notificationPopover.agoPrefix}${days}${t.notificationPopover.daysAgo}${t.notificationPopover.agoSuffix}`;
     
     return then.toLocaleDateString(locale);
   };
@@ -190,12 +192,14 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
     }
   };
 
+  const t = translations[locale];
+
   return (
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
         className="btn-ghost rounded-full p-2 relative group"
-        aria-label="Notifications"
+        aria-label={t.notificationPopover.title}
       >
         <FiBell size={18} className={unreadCount > 0 ? "animate-swing" : ""} />
         {unreadCount > 0 && (
@@ -219,12 +223,12 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
               className={`fixed top-[74px] left-2 right-2 z-50 w-auto bg-[var(--bg-soft)] backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-[var(--border-hover)] overflow-hidden sm:absolute sm:top-full sm:left-auto sm:right-0 sm:mt-2 sm:w-96 ${isAr ? "sm:right-0" : "sm:right-0"}`}
             >
               <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-black/5 dark:bg-white/5">
-                <h3 className="font-bold text-sm text-[var(--text)]">{isAr ? "التنبيهات" : "Notifications"}</h3>
+                <h3 className="font-bold text-sm text-[var(--text)]">{t.notificationPopover.title}</h3>
                 <button 
                   onClick={markAllAsRead}
                   className="text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  {isAr ? "تحديد الكل كمقروء" : "Mark all as read"}
+                  {t.notificationPopover.markAllRead}
                 </button>
               </div>
 
@@ -237,7 +241,7 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
                   <div className="p-12 text-center space-y-3">
                     <FiBell size={32} className="mx-auto text-white/5" />
                     <p className="text-muted text-sm font-medium">
-                      {isAr ? "لا توجد تنبيهات بعد" : "No notifications yet"}
+                      {t.notificationPopover.noNotifications}
                     </p>
                   </div>
                 ) : (
@@ -272,7 +276,7 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
                             <button 
                               onClick={(e) => { e.stopPropagation(); markAsRead(n.id); }}
                               className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10"
-                              title={isAr ? "تحديد كمقروء" : "Mark as read"}
+                              title={t.notificationPopover.markRead}
                             >
                               <FiCheck size={14} />
                             </button>
@@ -280,7 +284,7 @@ export function NotificationPopover({ locale }: { locale: Locale }) {
                           <button 
                             onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
                             className="p-1.5 rounded-lg text-muted hover:text-rose-500 hover:bg-rose-500/10"
-                            title={isAr ? "حذف" : "Delete"}
+                            title={t.common.delete}
                           >
                             <FiTrash2 size={14} />
                           </button>

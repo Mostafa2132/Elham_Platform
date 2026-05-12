@@ -21,8 +21,7 @@ import { useParams } from "next/navigation";
 import { translations } from "@/data/translations";
 import { type Post, type Locale, type Profile } from "@/types";
 import { AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { getBadge } from "@/lib/constants";
-import { POST_THEMES } from "@/lib/constants";
+import { getBadge, POST_THEMES, POST_CATEGORIES } from "@/lib/constants";
 import { downloadPostAsImage } from "@/lib/card-renderer";
 import { ZenViewer } from "./zen-viewer";
 import { useInteractionStore } from "@/store/interaction-store";
@@ -56,6 +55,9 @@ export function PostCard({
   const params = useParams();
   const locale = (params?.locale as Locale) || "en";
   const t = translations[locale];
+  
+  // Initialize reactions with translations
+  const reactionsList = REACTIONS(t);
   
   // حالات التحكم في القوائم والمودالات
   const [menuOpen, setMenuOpen] = useState(false);
@@ -142,10 +144,15 @@ export function PostCard({
   const parentMatch = post.content.match(/\[P:([\w-]+)\]/);
   const parentId = parentMatch ? parentMatch[1] : null;
   
+  const categoryMatch = post.content.match(/\[C:([\w-]+)\]/);
+  const categoryId = categoryMatch ? categoryMatch[1] : null;
+  const categoryObj = POST_CATEGORIES.find(c => c.id === categoryId);
+
   // Clean content from all metadata tags
   const finalContent = post.content
     .replace(/\[T:[\w-]+\]/g, "")
     .replace(/\[P:[\w-]+\]/g, "")
+    .replace(/\[C:[\w-]+\]/g, "")
     .trim();
   const displayContent = finalContent; // Kept for backwards compatibility in handleDownload
 
@@ -153,7 +160,7 @@ export function PostCard({
 
   const handleDownload = async (templateId: "standard" | "executive" | "zen" = "standard") => {
     try {
-      toast.info(locale === "ar" ? "جاري تحضير البطاقة الملهِمة..." : "Preparing your inspirational card...");
+      toast.info(t.common.preparingCard);
       await downloadPostAsImage({
         authorName: post.profiles?.full_name || post.profiles?.email?.split("@")[0] || "Anonymous",
         avatarUrl: post.profiles?.avatar_url || null,
@@ -162,7 +169,7 @@ export function PostCard({
         templateId
       });
       setShowTemplateSelect(false);
-      toast.success(locale === "ar" ? "تم تحميل البطاقة بنجاح! 🎉" : "Card downloaded successfully! 🎉");
+      toast.success(t.common.downloadSuccess);
     } catch (e) {
       toast.error(t.common.error);
     }
@@ -258,7 +265,7 @@ export function PostCard({
       const diff = 86400000 - (now - created);
       
       if (diff <= 0) {
-        setRemainingTime("Expired");
+        setRemainingTime(t.seal.expired);
         return;
       }
       
@@ -366,6 +373,13 @@ export function PostCard({
                 {post.profiles?.is_pro && (
                   <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1.5 py-0.5 text-[9px] font-bold tracking-wider shadow-[0_0_10px_rgba(251,191,36,0.5)] whitespace-nowrap">
                     {t.monetization.proBadge}
+                  </span>
+                )}
+
+                {categoryObj && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[9px] font-bold border border-indigo-500/20 whitespace-nowrap">
+                    <span>{categoryObj.icon}</span>
+                    <span>{locale === "ar" ? categoryObj.name_ar : categoryObj.name}</span>
                   </span>
                 )}
               </div>
@@ -602,7 +616,7 @@ export function PostCard({
               }}
               className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-all duration-300 ${
                 selectedReaction
-                  ? `${REACTIONS.find(r => r.id === selectedReaction)?.border} ${REACTIONS.find(r => r.id === selectedReaction)?.bg} ${REACTIONS.find(r => r.id === selectedReaction)?.color} shadow-lg ring-1 ring-white/20`
+                  ? `${reactionsList.find(r => r.id === selectedReaction)?.border} ${reactionsList.find(r => r.id === selectedReaction)?.bg} ${reactionsList.find(r => r.id === selectedReaction)?.color} shadow-lg ring-1 ring-white/20`
                   : "border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10"
               }`}
             >
@@ -611,7 +625,7 @@ export function PostCard({
                 transition={{ duration: 0.3, ease: "backOut" }}
               >
                 {(() => {
-                  const r = REACTIONS.find(rx => rx.id === selectedReaction) || REACTIONS[0];
+                  const r = reactionsList.find(rx => rx.id === selectedReaction) || reactionsList[0];
                   return <r.icon size={16} className={selectedReaction && r.fill ? "fill-current" : ""} />;
                 })()}
               </motion.div>
@@ -632,7 +646,7 @@ export function PostCard({
       <Modal 
         open={showTemplateSelect} 
         onClose={() => setShowTemplateSelect(false)}
-        title={locale === "ar" ? "اختر نمط البطاقة" : "Select Card Template"}
+        title={t.actions.selectTemplate}
       >
         <div className="space-y-4 p-4">
           <button 
@@ -640,8 +654,8 @@ export function PostCard({
             className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left"
           >
             <div>
-              <p className="font-bold">{locale === "ar" ? "الرئيسي (شفاف)" : "Standard (Glass)"}</p>
-              <p className="text-xs text-muted">The classic Elham look</p>
+              <p className="font-bold">{t.actions.standardGlass}</p>
+              <p className="text-xs text-muted">{t.actions.classicLook}</p>
             </div>
             <div className="h-4 w-4 rounded-full border-2 border-indigo-500" />
           </button>
@@ -651,8 +665,8 @@ export function PostCard({
             className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-amber-600/50 hover:bg-amber-600/5 transition-all text-left"
           >
             <div>
-              <p className="font-bold text-amber-500">{locale === "ar" ? "الملكي (ذهبي)" : "Executive (Gold Edge)"}</p>
-              <p className="text-xs text-muted">A premium, dark luxury theme</p>
+              <p className="font-bold text-amber-500">{t.actions.executiveGold}</p>
+              <p className="text-xs text-muted">{t.actions.premiumLook}</p>
             </div>
             <div className="h-4 w-4 rounded-full border-2 border-amber-600" />
           </button>
@@ -662,8 +676,8 @@ export function PostCard({
             className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left"
           >
             <div>
-              <p className="font-bold text-emerald-500">{locale === "ar" ? "الهدوء (بسيط)" : "Zen (Minimalist)"}</p>
-              <p className="text-xs text-muted">Pure text, zero distractions</p>
+              <p className="font-bold text-emerald-500">{t.actions.zenMinimal}</p>
+              <p className="text-xs text-muted">{t.actions.zenLook}</p>
             </div>
             <div className="h-4 w-4 rounded-full border-2 border-emerald-500" />
           </button>
@@ -686,7 +700,7 @@ export function PostCard({
         onCreated={(p) => {
           onUpdated(post); // trigger refresh
           setCreateOpen(false);
-          toast.success("Flow continued!");
+          toast.success(t.flow.continued);
         }}
       />
 
@@ -728,7 +742,7 @@ function EditPostModal({
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: { content: initialText },
-    validationSchema: Yup.object({ content: Yup.string().min(4, "Too short").required("Required") }),
+    validationSchema: Yup.object({ content: Yup.string().min(4, t.common.tooShort).required(t.common.required) }),
     onSubmit: async (values) => {
       const prefixedContent = selectedTheme !== "default" ? `[T:${selectedTheme}]${values.content}` : values.content;
       
@@ -764,7 +778,7 @@ function EditPostModal({
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-muted mb-2 block">{locale === "ar" ? "تعديل الثيم" : "Edit background theme"}</label>
+          <label className="text-xs font-semibold text-muted mb-2 block">{t.actions.editTheme}</label>
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
             {POST_THEMES.map((theme) => (
               <button

@@ -91,7 +91,7 @@ export function ZenViewer({
             transition={{ delay: 0.5 }}
             className="text-xs font-black uppercase tracking-[0.3em] text-white/40"
           >
-            {post.profiles?.full_name} {locale === "ar" ? "يشاركك الإلهام" : "is sharing inspiration"}
+            {post.profiles?.full_name} {t.actions.sharingInspiration}
           </motion.p>
         </div>
 
@@ -111,7 +111,7 @@ export function ZenViewer({
         >
           <div className="h-[1px] w-12 bg-current" />
           <p className="text-[10px] font-bold uppercase tracking-widest leading-none">
-            {t.brand} • Elite Zen Experience
+            {t.brand} • {t.actions.zenExperience}
           </p>
           <div className="h-[1px] w-12 bg-current" />
         </motion.div>
