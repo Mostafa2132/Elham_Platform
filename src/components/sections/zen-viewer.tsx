@@ -7,6 +7,7 @@ import { FiX, FiWind, FiZap, FiSun } from "react-icons/fi";
 import { Avatar } from "@/components/ui/avatar";
 import { type Post, type Locale } from "@/types";
 import { translations } from "@/data/translations";
+import { POST_CATEGORIES } from "@/lib/constants";
 
 export function ZenViewer({ 
   post, 
@@ -93,12 +94,28 @@ export function ZenViewer({
           >
             {post.profiles?.full_name} {t.actions.sharingInspiration}
           </motion.p>
+          {(() => {
+            const catMatch = post.content.match(/\[C:([\w-]+)\]/);
+            const catId = catMatch ? catMatch[1] : null;
+            const catObj = POST_CATEGORIES.find(c => c.id === catId);
+            if (!catObj) return null;
+            return (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white/80"
+              >
+                <span>{catObj.icon}</span>
+                <span>{locale === "ar" ? catObj.name_ar : catObj.name}</span>
+              </motion.div>
+            );
+          })()}
         </div>
 
         <div className="relative">
           <FiWind className="absolute -top-16 -left-8 md:-left-16 text-white/5 text-8xl rotate-12" />
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-black italic first-letter:text-[1.5em] leading-[1.3] text-white drop-shadow-2xl">
-            {post.content.replace(/\[T:\w+\]/g, "").replace(/\[P:[\w-]+\]/g, "").trim()}
+            {post.content.replace(/\[T:[\w-]+\]/g, "").replace(/\[P:[\w-]+\]/g, "").replace(/\[C:[\w-]+\]/g, "").trim()}
           </h1>
           <FiSun className="absolute -bottom-16 -right-8 md:-right-16 text-white/5 text-8xl" />
         </div>
