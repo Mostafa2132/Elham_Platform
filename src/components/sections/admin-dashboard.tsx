@@ -14,7 +14,7 @@ import { compressImage } from "@/lib/image-compression";
 import { useParams } from "next/navigation";
 import { translations } from "@/data/translations";
 import { type Profile, type Post, type Ad, type Announcement, type Locale } from "@/types";
-import { POST_THEMES } from "@/lib/constants";
+import { POST_THEMES, POST_CATEGORIES } from "@/lib/constants";
 
 type AdminTab = "analytics" | "leaderboard" | "users" | "posts" | "ads" | "announcements" | "master" | "requests" | "reports";
 
@@ -206,19 +206,29 @@ export function AdminDashboard() {
         setUsersChartData(usersActivity);
       }
 
-      // Calculate Trending Now (Top Themes)
-      const themeCounts: Record<string, number> = {};
+      // Calculate Trending Now (Hashtags & Categories)
+      const tagMap: Record<string, number> = {};
       (p as Post[]).forEach(post => {
-        const match = post.content.match(/\[T:([\w-]+)\]/);
-        if (match && match[1]) {
-          const tag = match[1];
-          themeCounts[tag] = (themeCounts[tag] || 0) + 1;
-        }
+        // 1. Hashtags
+        const hashtags = post.content.match(/#[\w\u0621-\u064A]+/g);
+        hashtags?.forEach((tag: string) => { tagMap[tag] = (tagMap[tag] || 0) + 1; });
+
+        // 2. Categories [C:id]
+        const categories = post.content.match(/\[C:([\w-]+)\]/g);
+        categories?.forEach((cStr: string) => {
+          const catId = cStr.match(/\[C:([\w-]+)\]/)?.[1];
+          if (catId) {
+            const catObj = POST_CATEGORIES.find(c => c.id === catId);
+            const formatted = isAr ? (catObj?.name_ar || catId) : `#${catObj?.name || catId}`;
+            tagMap[formatted] = (tagMap[formatted] || 0) + 1;
+          }
+        });
       });
-      const topTags = Object.entries(themeCounts)
+
+      const topTags = Object.entries(tagMap)
         .map(([tag, count]) => ({ tag, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 3);
+        .slice(0, 5);
       setTrendingTags(topTags);
 
       // Calculate Growth %
@@ -493,7 +503,7 @@ export function AdminDashboard() {
               {tab === "analytics" && (
                 <div className="space-y-6">
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <StatCard label={t.admin.totalUsers} value={stats.users} icon={<FiUsers />} color="indigo" />
                     <StatCard label={t.admin.totalPosts} value={stats.posts} icon={<FiFileText />} color="purple" />
                     <StatCard label={t.admin.totalLikes} value={stats.likes} icon={<FiBarChart2 />} color="cyan" />
@@ -1123,13 +1133,14 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
     blue: "bg-blue-500/15 text-blue-400",
   };
   return (
-    <div className="glass-card rounded-2xl p-5 space-y-3">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${colors[color]}`}>
+    <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3 border border-white/5 shadow-xl relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-700" />
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg relative z-10 ${colors[color]}`}>
         {icon}
       </div>
-      <div>
-        <p className="text-2xl font-black tabular-nums">{value.toLocaleString()}</p>
-        <p className="text-muted text-[10px] uppercase font-bold tracking-wider mt-0.5">{label}</p>
+      <div className="relative z-10">
+        <p className="text-xl sm:text-2xl font-black tabular-nums">{value.toLocaleString()}</p>
+        <p className="text-muted text-[9px] sm:text-[10px] uppercase font-bold tracking-wider mt-0.5 truncate">{label}</p>
       </div>
     </div>
   );
