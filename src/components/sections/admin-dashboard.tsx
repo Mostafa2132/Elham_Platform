@@ -119,6 +119,29 @@ export function AdminDashboard() {
       supabase.from("ads").select("*", { count: "exact", head: true }),
       supabase.from("likes").select("*", { count: "exact", head: true }),
     ]);
+
+    // Cleanup expired authentic posts (Lazy Cleanup)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const expiredPosts = (p ?? []).filter(post => post.is_authentic && post.created_at < twentyFourHoursAgo);
+    
+    if (expiredPosts.length > 0) {
+      const ids = expiredPosts.map(ep => ep.id);
+      await supabase.from("posts").update({ is_authentic: false }).in("id", ids);
+      if (p) {
+        p.forEach(post => {
+          if (ids.includes(post.id)) post.is_authentic = false;
+        });
+      }
+    }
+
+    // Cleanup expired Daily Ritual
+    const { data: ritualData } = await supabase.from("rituals").select("updated_at").eq("id", "daily_ritual").maybeSingle();
+    if (ritualData && ritualData.updated_at) {
+      const ritualAge = Date.now() - new Date(ritualData.updated_at).getTime();
+      if (ritualAge > 86400000) {
+        await supabase.from("rituals").update({ content: null }).eq("id", "daily_ritual");
+      }
+    }
     
     const hydratedPosts = (p ?? []).map((item: any) => ({
       ...item,

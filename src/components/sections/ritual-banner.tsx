@@ -72,9 +72,12 @@ export function RitualBanner({ locale }: { locale: Locale }) {
   }, [updatedAt]);
 
   if (loading) return null;
-  if (!ritual) return (
-    <div className="text-center text-xs text-rose-500 my-4 opacity-50">
-      [Debug] No active ritual found in the database. Make sure the rituals-schema.sql was run successfully and a ritual is set.
+  
+  const isExpired = updatedAt && (Date.now() - new Date(updatedAt).getTime() > 86400000);
+
+  if (!ritual || isExpired) return (
+    <div className="text-center text-xs text-muted/40 my-4 italic">
+      {isExpired ? (locale === "ar" ? "في انتظار إلهام اليوم الجديد..." : "Waiting for today's new inspiration...") : ""}
     </div>
   );
 
