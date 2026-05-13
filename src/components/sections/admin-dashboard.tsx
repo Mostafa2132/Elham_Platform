@@ -702,61 +702,125 @@ export function AdminDashboard() {
               )}
 
               {tab === "leaderboard" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="text-xl font-bold flex items-center gap-2">
-                      <FiStar className="text-amber-500" />
-                      {t.admin.topPosters}
-                    </h3>
-                    <p className="text-muted text-sm">{leaderboard.length} {t.admin.totalCreators}</p>
+                <div className="space-y-10">
+                  {/* Top 3 Podium */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
+                    {/* we want the order: Rank 2, Rank 1, Rank 3 */}
+                    {[2, 1, 3].map((rank, i) => {
+                      const item = leaderboard[rank - 1];
+                      if (!item) return <div key={i} className="hidden md:block" />;
+
+                      const medals = ["🥇", "🥈", "🥉"];
+                      const colors = ["text-amber-400", "text-slate-300", "text-amber-700"];
+                      const bgGlow = ["bg-amber-400/10", "bg-slate-300/10", "bg-amber-700/10"];
+                      const medalEmoji = medals[rank - 1];
+
+                      const getSuffix = (r: number) => {
+                        if (isAr) return "";
+                        if (r === 1) return "ST";
+                        if (r === 2) return "ND";
+                        if (r === 3) return "RD";
+                        return "TH";
+                      };
+
+                      return (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.2, type: "spring", stiffness: 100 }}
+                          className={`relative flex flex-col items-center p-4 rounded-3xl border border-white/5 transition-all duration-500 group ${
+                            rank === 1 
+                              ? "bg-amber-400/5 border-amber-400/20 md:scale-105 z-10 shadow-[0_20px_50px_rgba(245,158,11,0.15)] md:-translate-y-4" 
+                              : "bg-white/5"
+                          }`}
+                        >
+                          <div className={`absolute -top-4 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${bgGlow[rank-1]} ${colors[rank-1]} border border-current/20 shadow-lg`}>
+                            {rank === 1 ? t.admin.topRank : `${rank}${getSuffix(rank)}`}
+                          </div>
+                          
+                          <div className="relative mb-3">
+                            <div className={`absolute inset-0 rounded-full blur-xl opacity-20 ${bgGlow[rank-1]}`} />
+                            <div className={`p-0.5 rounded-full transition-transform duration-500 group-hover:scale-105 ${
+                              rank === 1 ? "bg-gradient-to-tr from-amber-400 via-yellow-200 to-yellow-600" : 
+                              rank === 2 ? "bg-gradient-to-tr from-slate-400 to-slate-200" : 
+                              "bg-gradient-to-tr from-amber-800 to-amber-600"
+                            }`}>
+                              <Avatar src={item.avatar_url} size={rank === 1 ? 56 : 44} className="ring-2 ring-black/40" />
+                            </div>
+                            <span className="absolute -bottom-1 -right-1 text-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] select-none">
+                              {medalEmoji}
+                            </span>
+                          </div>
+
+                          <div className="text-center min-w-0 w-full">
+                            <h4 className="font-black text-xs sm:text-sm truncate group-hover:text-amber-400 transition-colors">
+                              {item.full_name || "Soul"}
+                            </h4>
+                            <p className="text-[9px] text-muted font-bold uppercase tracking-widest opacity-60">
+                              @{item.username || item.username || item.email.split('@')[0]}
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2 mt-4 w-full pt-3 border-t border-white/5">
+                            <div className="flex-1 text-center">
+                              <p className="text-sm font-black leading-none">{item.posts_count}</p>
+                              <p className="text-[7px] uppercase font-bold text-muted mt-1">{t.admin.postsCountShort || "Posts"}</p>
+                            </div>
+                            <div className="flex-1 text-center border-s border-white/5">
+                              <p className="text-sm font-black leading-none text-cyan-400">{item.likes_count}</p>
+                              <p className="text-[7px] uppercase font-bold text-muted mt-1">{t.admin.likesShort || "Likes"}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
 
-                  <div className="grid gap-3">
-                    {leaderboard.map((u, index) => (
-                      <motion.div
-                        key={u.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.04 }}
-                        className={`glass-card rounded-2xl p-4 sm:p-5 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 group hover:border-amber-500/30 transition-all ${
-                          index === 0 ? "ring-2 ring-amber-500/20 bg-amber-500/5 shadow-[0_0_40px_rgba(245,158,11,0.15)]" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 sm:gap-5 min-w-0 w-full sm:w-auto">
-                          <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl flex items-center justify-center font-black text-lg sm:text-xl ${
-                            index === 0 ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.6)]" :
-                            index === 1 ? "bg-slate-300 text-black shadow-[0_0_20px_rgba(203,213,225,0.4)]" :
-                            index === 2 ? "bg-amber-700 text-white shadow-[0_0_20px_rgba(180,83,9,0.4)]" :
-                            "bg-white/5 text-muted border border-white/10"
-                          }`}>
-                            {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
-                          </div>
-                          <Avatar src={u.avatar_url} name={u.full_name || u.email} size={48} />
-                          <div className="min-w-0">
-                            <p className="font-black text-sm sm:text-base truncate flex items-center gap-2">
-                              {u.full_name || "Anonymous"}
-                              {u.is_pro && <span className="text-[9px] sm:text-[10px] bg-amber-500/20 text-amber-500 px-1.5 sm:px-2 py-0.5 rounded-md font-black uppercase tracking-widest">PRO</span>}
-                            </p>
-                            <p className="text-muted text-xs sm:text-sm truncate opacity-60">@{u.username || u.email.split('@')[0]}</p>
-                          </div>
-                        </div>
+                  {/* Others List */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">{t.admin.allCreators}</p>
+                      <div className="h-[1px] flex-1 mx-6 bg-gradient-to-r from-white/10 to-transparent" />
+                    </div>
 
-                        <div className="flex items-center justify-center sm:justify-end w-full sm:w-auto shrink-0 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/10">
-                          <div className="text-center flex-1 sm:flex-none sm:min-w-[80px]">
-                            <p className="text-xl sm:text-2xl font-black brand-gradient-text leading-none">{u.posts_count}</p>
-                            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.postsCount}</p>
+                    <div className="grid gap-2">
+                      {leaderboard.slice(3).map((u, index) => (
+                        <motion.div
+                          key={u.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="glass-card rounded-2xl p-3 sm:p-4 border border-white/5 flex items-center justify-between group hover:border-indigo-500/30 transition-all"
+                        >
+                          <div className="flex items-center gap-4 min-w-0">
+                            <span className="w-6 text-[10px] font-black text-muted group-hover:text-indigo-400 transition-colors">
+                              {(index + 4).toString().padStart(2, '0')}
+                            </span>
+                            <Avatar src={u.avatar_url} size={40} className="grayscale group-hover:grayscale-0 transition-all duration-500" />
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm truncate flex items-center gap-2">
+                                {u.full_name || "Soul"}
+                                {u.is_pro && <span className="text-[8px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded-md font-black">PRO</span>}
+                              </p>
+                              <p className="text-[10px] text-muted opacity-60">@{u.username || u.email.split('@')[0]}</p>
+                            </div>
                           </div>
 
-                          {/* فاصل وسطي دقيق */}
-                          <div className="w-[1px] h-10 bg-white/10 mx-4 sm:mx-6 shrink-0" />
-
-                          <div className="text-center flex-1 sm:flex-none sm:min-w-[80px]">
-                            <p className="text-xl sm:text-2xl font-black text-cyan-400 leading-none">{u.likes_count}</p>
-                            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-muted tracking-widest mt-2">{t.admin.interactions}</p>
+                          <div className="flex items-center gap-6 text-right">
+                             <div className="hidden sm:block">
+                                <p className="text-sm font-black leading-none">{u.posts_count}</p>
+                                <p className="text-[8px] uppercase font-bold text-muted mt-1">Posts</p>
+                             </div>
+                             <div className="w-[1px] h-6 bg-white/5 hidden sm:block" />
+                             <div>
+                                <p className="text-sm font-black text-cyan-400 leading-none">{u.likes_count}</p>
+                                <p className="text-[8px] uppercase font-bold text-muted mt-1">Interactions</p>
+                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
