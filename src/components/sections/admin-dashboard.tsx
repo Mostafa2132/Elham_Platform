@@ -94,6 +94,7 @@ export function AdminDashboard() {
   const [addAnnOpen, setAddAnnOpen] = useState(false);
   const [requests, setRequests] = useState<Post[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
 
 
   const load = useCallback(async () => {
@@ -833,7 +834,12 @@ export function AdminDashboard() {
                               </p>
                             </div>
                             <button
-                              onClick={() => deletePost(p.id)}
+                              onClick={() => setConfirmModal({
+                                open: true,
+                                title: t.confirmDelete.title,
+                                message: t.confirmDelete.message,
+                                onConfirm: () => deletePost(p.id)
+                              })}
                               className="btn-danger p-2 rounded-xl opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center mx-auto"
                               title={locale === "ar" ? "حذف المنشور" : "Delete Post"}
                             >
@@ -873,7 +879,12 @@ export function AdminDashboard() {
                         <button onClick={() => toggleAd(ad)} className="btn-ghost p-1.5 rounded-lg text-lg">
                           {ad.active ? <FiToggleRight className="text-[var(--accent)]" size={20} /> : <FiToggleLeft className="text-muted" size={20} />}
                         </button>
-                        <button onClick={() => deleteAd(ad.id)} className="btn-danger p-1.5 rounded-lg">
+                        <button onClick={() => setConfirmModal({
+                          open: true,
+                          title: locale === "ar" ? "حذف الإعلان" : "Delete Ad",
+                          message: locale === "ar" ? "هل تريد حذف هذا الإعلان نهائياً؟" : "Permanently remove this ad?",
+                          onConfirm: () => deleteAd(ad.id)
+                        })} className="btn-danger p-1.5 rounded-lg">
                           <FiTrash2 size={13} />
                         </button>
                       </div>
@@ -1130,6 +1141,41 @@ export function AdminDashboard() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Generic Confirmation Modal */}
+      {confirmModal && (
+        <Modal 
+          open={confirmModal.open} 
+          onClose={() => setConfirmModal(null)} 
+          title={confirmModal.title}
+        >
+          <div className="p-6 text-center space-y-6">
+            <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center mx-auto ring-1 ring-rose-500/20">
+              <FiAlertTriangle size={40} className="text-rose-500" />
+            </div>
+            <p className="text-muted leading-relaxed font-medium">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3 pt-4">
+              <button 
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-all"
+              >
+                {t.confirmDelete.cancel}
+              </button>
+              <button 
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-rose-500 text-white font-black shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
+              >
+                {t.confirmDelete.confirm}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Add Ad Modal */}
       <AddAdModal

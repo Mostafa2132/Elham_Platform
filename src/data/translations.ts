@@ -101,6 +101,12 @@ export const translations = {
       you: "You",
       selectCategory: "Select a Category",
     },
+    confirmDelete: {
+      title: "Delete Inspiration",
+      message: "Are you sure you want to remove this piece of light from the universe?",
+      confirm: "Yes, Delete",
+      cancel: "Keep it",
+    },
     admin: {
       subtitle: "Platform control center",
       refresh: "Refresh",
@@ -437,6 +443,12 @@ export const translations = {
       aiSuggest: "إلهام ذكي",
       you: "أنت",
       selectCategory: "اختر نوع الإلهام",
+    },
+    confirmDelete: {
+      title: "حذف الإلهام",
+      message: "هل أنت متأكد أنك تريد مسح هذا النور من الكون؟",
+      confirm: "نعم، حذف",
+      cancel: "تراجع",
     },
     admin: {
       subtitle: "مركز التحكم بالمنصة",

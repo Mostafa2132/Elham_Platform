@@ -69,6 +69,7 @@ export function PostCard({
   const [supportOpen, setSupportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [flowOpen, setFlowOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const reactionBtnRef = useRef<HTMLDivElement>(null);
@@ -511,7 +512,7 @@ export function PostCard({
                           <span>{t.common.edit}</span>
                         </button>
                         <button
-                          onClick={() => { onDelete(post); setMenuOpen(false); }}
+                          onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }}
                           className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-all group/btn"
                         >
                           <FiTrash2 size={16} className="text-red-400/70 group-hover/btn:text-red-400" />
@@ -642,6 +643,39 @@ export function PostCard({
         onClose={() => setEditOpen(false)}
         onUpdated={onUpdated}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal 
+        open={showDeleteConfirm} 
+        onClose={() => setShowDeleteConfirm(false)} 
+        title={t.confirmDelete.title}
+      >
+        <div className="p-6 text-center space-y-6">
+          <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center mx-auto ring-1 ring-rose-500/20">
+            <FiTrash2 size={40} className="text-rose-500" />
+          </div>
+          <p className="text-muted leading-relaxed font-medium">
+            {t.confirmDelete.message}
+          </p>
+          <div className="flex gap-3 pt-4">
+            <button 
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-all"
+            >
+              {t.confirmDelete.cancel}
+            </button>
+            <button 
+              onClick={() => {
+                onDelete(post);
+                setShowDeleteConfirm(false);
+              }}
+              className="flex-1 py-3 rounded-2xl bg-rose-500 text-white font-black shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
+            >
+              {t.confirmDelete.confirm}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal 
         open={showTemplateSelect} 
